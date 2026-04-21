@@ -99,8 +99,8 @@ const TREE = {
     q: 'What parameter are you testing a hypothesis about?',
     ctx: 'Identify the population parameter of interest before choosing a test.',
     opts: [
-      { icon:'A', cls:'a', label:'Population mean &mu;',          sub:'Testing whether the average of a quantitative variable equals a specific value.',  next:'mean_sigma' },
-      { icon:'B', cls:'b', label:'Population proportion p',       sub:'Testing whether the fraction of a population with a characteristic equals a specific value.', next:'prop_check' },
+      { icon:'A', cls:'a', label:'Population mean &mu;',     sub:'Testing whether the average of a quantitative variable equals a specific value.',              next:'mean_sigma' },
+      { icon:'B', cls:'b', label:'Population proportion p',  sub:'Testing whether the fraction of a population with a characteristic equals a specific value.',  next:'prop_check' },
     ]
   },
 
@@ -109,18 +109,40 @@ const TREE = {
     q: 'Is the population standard deviation &sigma; known?',
     ctx: '<strong>Known &sigma;:</strong> rare in practice — requires prior knowledge or given explicitly in the problem.<br><strong>Unknown &sigma;:</strong> the typical case; S (sample std dev) is computed from the data.',
     opts: [
-      { icon:'✓', cls:'yes', label:'Yes — &sigma; is known',                    sub:'The exact population standard deviation is given in the problem.',  next:'result_z_sigma' },
-      { icon:'✗', cls:'no',  label:'No — &sigma; is unknown, I will use S',     sub:'I will estimate &sigma; with the sample standard deviation S.', next:'mean_n' },
+      { icon:'✓', cls:'yes', label:'Yes — &sigma; is known',               sub:'The exact population standard deviation is given in the problem.',   next:'mean_sigma_normal' },
+      { icon:'✗', cls:'no',  label:'No — &sigma; is unknown, I will use S', sub:'I will estimate &sigma; with the sample standard deviation S.',     next:'mean_n' },
     ]
   },
 
+  /* ── σ known branch: check normality first ── */
+  mean_sigma_normal: {
+    num: 'Step 3 of 3',
+    q: 'Is the population approximately normally distributed?',
+    ctx: 'When &sigma; is known, <strong>population normality is the key condition</strong> — not sample size.<br>If the population is normal, Z = (X&#772; &minus; &mu;&#8320;)/(&sigma;/&radic;n) ~ N(0,1) <em>exactly</em>, regardless of n.<br>If the population is not normal, the CLT still rescues the test when n &gt; 40.',
+    opts: [
+      { icon:'✓', cls:'yes', label:'Yes — population is approximately normal',  sub:'Z-test is exact for any n. No restriction on sample size.',       next:'result_z_sigma_exact' },
+      { icon:'✗', cls:'no',  label:'No — population is clearly non-normal',     sub:'Need to check whether n is large enough for the CLT to apply.',   next:'mean_sigma_n' },
+    ]
+  },
+
+  mean_sigma_n: {
+    num: 'Step 3 of 3 (continued)',
+    q: 'What is the sample size n?',
+    ctx: 'Population is non-normal and &sigma; is known. The Z-test is still valid when n is large enough for the <strong>Central Limit Theorem</strong> to make Z approximately standard normal.',
+    opts: [
+      { icon:'✓', cls:'yes', label:'n &gt; 40 &nbsp;(large sample)',   sub:'CLT applies — Z-test is approximately valid.',          next:'result_z_sigma_clt' },
+      { icon:'✗', cls:'no',  label:'n &le; 40 &nbsp;(small sample)',   sub:'Neither normality nor CLT holds. Z-test is not valid.',  next:'result_warn_sigma_small' },
+    ]
+  },
+
+  /* ── σ unknown branch ── */
   mean_n: {
     num: 'Step 3 of 3',
     q: 'What is the sample size n?',
-    ctx: '<strong>Large sample (n &gt; 40):</strong> by the CLT, Z = (X&#772; &minus; &mu;&#8320;)/(S/&radic;n) &approx; N(0,1). S is a good substitute for &sigma;.<br><strong>Small sample (n &le; 40):</strong> the CLT does not apply; normality of the population is required and the t-distribution must be used.',
+    ctx: '<strong>Large sample (n &gt; 40):</strong> by the CLT, Z = (X&#772; &minus; &mu;&#8320;)/(S/&radic;n) &approx; N(0,1). S is a good substitute for &sigma;.<br><strong>Small sample (n &le; 40):</strong> the CLT does not apply; population normality is required and the t-distribution must be used.',
     opts: [
-      { icon:'✓', cls:'yes', label:'n &gt; 40 &nbsp;(large sample)',             sub:'CLT justifies using Z with S in place of &sigma;.',    next:'result_z_large' },
-      { icon:'✗', cls:'no',  label:'n &le; 40 &nbsp;(small sample)',             sub:'Need to check population normality and use t.',        next:'mean_normal' },
+      { icon:'✓', cls:'yes', label:'n &gt; 40 &nbsp;(large sample)',  sub:'CLT justifies using Z with S in place of &sigma;.',   next:'result_z_large' },
+      { icon:'✗', cls:'no',  label:'n &le; 40 &nbsp;(small sample)',  sub:'Need to check population normality and use t.',        next:'mean_normal' },
     ]
   },
 
@@ -139,20 +161,41 @@ const TREE = {
     q: 'Do both large-sample conditions hold?',
     ctx: 'The Z-test for a proportion requires <strong>np&#8320; &ge; 10</strong> and <strong>n(1 &minus; p&#8320;) &ge; 10</strong>, where p&#8320; is the null hypothesis value.<br>These ensure the sampling distribution of p&#770; is approximately normal.',
     opts: [
-      { icon:'✓', cls:'yes', label:'Yes — np&#8320; &ge; 10 and n(1 &minus; p&#8320;) &ge; 10',  sub:'Both conditions satisfied; Z-test is valid.',             next:'result_z_prop' },
-      { icon:'✗', cls:'no',  label:'No — one or both conditions fail',                            sub:'Sample is too small for the Z approximation.',            next:'result_exact' },
+      { icon:'✓', cls:'yes', label:'Yes — np&#8320; &ge; 10 and n(1 &minus; p&#8320;) &ge; 10',  sub:'Both conditions satisfied; Z-test is valid.',           next:'result_z_prop' },
+      { icon:'✗', cls:'no',  label:'No — one or both conditions fail',                            sub:'Sample is too small for the Z approximation.',          next:'result_exact' },
     ]
   },
 
   /* ── Results ── */
-  result_z_sigma: {
+
+  result_z_sigma_exact: {
     result: true, cls:'r-z',
-    badge:'Z-test — &sigma; known',
-    title:'One-sample Z-test for &mu;',
+    badge:'Z-test — &sigma; known (exact)',
+    title:'One-sample Z-test for &mu; &nbsp;— any n',
     stat:'H&#8320;: &mu; = &mu;&#8320;',
-    formula:'Z = (X&#772; &minus; &mu;&#8320;) / (&sigma; / &radic;n) &nbsp;~&nbsp; N(0, 1)',
-    cond:'<strong>When to use:</strong> &sigma; is known (given). Population need not be normal if n is large, but for small n the population should be approximately normal.<br><strong>Critical values:</strong> z&#x03B1; from the standard normal table.',
-    ref:'Devore §8.2'
+    formula:'Z = (X&#772; &minus; &mu;&#8320;) / (&sigma; / &radic;n) &nbsp;~&nbsp; N(0, 1) &nbsp;<em>exactly</em>',
+    cond:'<strong>When to use:</strong> &sigma; is known AND the population is normally distributed. Because X&#772; is exactly normal when the population is normal, this test is exact for <em>any</em> sample size n — including small samples.<br><strong>Critical values:</strong> z<sub>&alpha;</sub> from the standard normal table.',
+    ref:'Devore §8.2 — "A Normal Population Distribution with Known &sigma;"'
+  },
+
+  result_z_sigma_clt: {
+    result: true, cls:'r-z',
+    badge:'Z-test — &sigma; known, CLT',
+    title:'One-sample Z-test for &mu; &nbsp;(n &gt; 40, non-normal population)',
+    stat:'H&#8320;: &mu; = &mu;&#8320;',
+    formula:'Z = (X&#772; &minus; &mu;&#8320;) / (&sigma; / &radic;n) &nbsp;&approx;&nbsp; N(0, 1)',
+    cond:'<strong>When to use:</strong> &sigma; is known but the population is not normal. With n &gt; 40, the CLT ensures the test statistic is approximately standard normal.<br><strong>Note:</strong> this is approximate (not exact), unlike the normal-population case above.<br><strong>Critical values:</strong> z<sub>&alpha;</sub> from the standard normal table.',
+    ref:'Devore §8.2 — "Large-Sample Tests"'
+  },
+
+  result_warn_sigma_small: {
+    result: true, cls:'r-warn',
+    badge:'Warning — conditions not met',
+    title:'Z-test not valid in this case',
+    stat:'',
+    formula:'',
+    cond:'With &sigma; known but the population non-normal and n &le; 40, neither condition for a valid Z-test is satisfied:<br>&bull; The population is not normal, so the exact result does not apply.<br>&bull; The sample is too small for the CLT approximation.<br><br><strong>Options:</strong><br>&bull; Collect a larger sample (n &gt; 40) so the CLT applies.<br>&bull; Re-examine whether the population is truly non-normal (a normal probability plot may help).<br>&bull; Use a nonparametric alternative (e.g., Wilcoxon signed-rank test — Devore §15).',
+    ref:'Devore §8.2, §15.4'
   },
 
   result_z_large: {
@@ -161,8 +204,8 @@ const TREE = {
     title:'One-sample Z-test for &mu; &nbsp;(n &gt; 40, &sigma; unknown)',
     stat:'H&#8320;: &mu; = &mu;&#8320;',
     formula:'Z = (X&#772; &minus; &mu;&#8320;) / (S / &radic;n) &nbsp;&approx;&nbsp; N(0, 1)',
-    cond:'<strong>When to use:</strong> &sigma; is unknown but n &gt; 40. The CLT ensures Z &approx; N(0,1) regardless of the population shape. S substitutes for &sigma; with negligible extra variability.<br><strong>Critical values:</strong> z&#x03B1; from the standard normal table.',
-    ref:'Devore §8.2 — see course notes: rule of thumb n &gt; 40'
+    cond:'<strong>When to use:</strong> &sigma; is unknown but n &gt; 40. The CLT ensures Z &approx; N(0,1) regardless of the population shape. S substitutes for &sigma; with negligible extra variability.<br><strong>Critical values:</strong> z<sub>&alpha;</sub> from the standard normal table.',
+    ref:'Devore §8.2 — course rule of thumb: n &gt; 40'
   },
 
   result_t: {
@@ -171,7 +214,7 @@ const TREE = {
     title:'One-sample t-test for &mu; &nbsp;(n &le; 40, &sigma; unknown)',
     stat:'H&#8320;: &mu; = &mu;&#8320;',
     formula:'T = (X&#772; &minus; &mu;&#8320;) / (S / &radic;n) &nbsp;~&nbsp; t<sub>n&minus;1</sub>',
-    cond:'<strong>When to use:</strong> &sigma; unknown, n &le; 40, and the population is approximately normal. Degrees of freedom = n &minus; 1.<br><strong>Critical values:</strong> t&#x03B1;,&nu; from the t-table (Appendix A.5 in Devore).',
+    cond:'<strong>When to use:</strong> &sigma; unknown, n &le; 40, and the population is approximately normal. Degrees of freedom = n &minus; 1.<br><strong>Critical values:</strong> t<sub>&alpha;,&nu;</sub> from the t-table (Appendix A.5 in Devore).',
     ref:'Devore §8.3'
   },
 
@@ -181,7 +224,7 @@ const TREE = {
     title:'One-sample Z-test for proportion p',
     stat:'H&#8320;: p = p&#8320;',
     formula:'Z = (p&#770; &minus; p&#8320;) / &radic;[p&#8320;(1&minus;p&#8320;)/n] &nbsp;~&nbsp; N(0, 1)',
-    cond:'<strong>When to use:</strong> np&#8320; &ge; 10 and n(1&minus;p&#8320;) &ge; 10. The standard deviation is fully determined under H&#8320; — no substitution needed.<br><strong>Critical values:</strong> z&#x03B1; from the standard normal table.',
+    cond:'<strong>When to use:</strong> np&#8320; &ge; 10 and n(1&minus;p&#8320;) &ge; 10. The standard deviation is fully determined under H&#8320; — no substitution needed.<br><strong>Critical values:</strong> z<sub>&alpha;</sub> from the standard normal table.',
     ref:'Devore §8.4'
   },
 
@@ -189,7 +232,7 @@ const TREE = {
     result: true, cls:'r-warn',
     badge:'Warning',
     title:'Standard parametric test may not apply',
-    stat: '',
+    stat:'',
     formula:'',
     cond:'With n &le; 40 and a clearly non-normal population, the one-sample t-test is not reliable. Options include:<br>&bull; Collect a larger sample (n &gt; 40) so the CLT applies.<br>&bull; Use a nonparametric test (e.g., Wilcoxon signed-rank test — see Devore §15).<br>&bull; Apply a normalizing transformation (e.g., log transform).',
     ref:'Devore §15.4'
