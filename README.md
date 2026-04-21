@@ -23,9 +23,18 @@ All demos are fully self-contained HTML files — no installation, no internet c
 
 Demonstrates the fundamental equivalence between the two hypothesis testing decision methods:
 
-> **p-value < $\alpha$** ⟺ **test statistic falls in the rejection region**
+$$\text{p-value} < \alpha \iff \text{test statistic falls in the rejection region}$$
 
-Features three test types selectable by tab — $Z$-test for $\mu$ ($n > 40$, $\sigma$ unknown), one-sample $t$-test ($n \ge 40$, $\sigma$ unknown), and $Z$-test for proportion $p$. Interactive sliders for the test statistic, degrees of freedom, and $\alpha$. A "when to use" panel and decision guide help students identify the correct test before computing.
+Features four test types selectable by tab:
+
+| Tab | Condition | Test statistic | Validity |
+|-----|-----------|---------------|----------|
+| $Z$-test ($\sigma$ known, exact) | Normal population, $\sigma$ known, any $n$ | $Z = \dfrac{\bar{X} - \mu_0}{\sigma/\sqrt{n}} \sim N(0,1)$ | Exact |
+| $Z$-test ($n > 40$, $\sigma$ unknown) | Any population, $n > 40$ | $Z = \dfrac{\bar{X} - \mu_0}{S/\sqrt{n}} \approx N(0,1)$ | Approximate (CLT) |
+| $t$-test ($n \leq 40$, $\sigma$ unknown) | Normal population, $n \leq 40$ | $T = \dfrac{\bar{X} - \mu_0}{S/\sqrt{n}} \sim t_{n-1}$ | Exact |
+| $Z$-test (proportion) | $np_0 \geq 10$ and $n(1-p_0) \geq 10$ | $Z = \dfrac{\hat{p} - p_0}{\sqrt{p_0(1-p_0)/n}} \sim N(0,1)$ | Approximate |
+
+Interactive sliders for the test statistic, degrees of freedom $\nu = n - 1$, and $\alpha$. A "when to use" panel and decision guide help students identify the correct test before computing.
 
 ---
 
@@ -35,10 +44,15 @@ Features three test types selectable by tab — $Z$-test for $\mu$ ($n > 40$, $\
 
 Two simultaneous canvases show the $H_0$ distribution and the true distribution overlapping, with $\alpha$, $\beta$, and power shaded as areas in distinct colors. A live power curve plots Power vs. $\delta$ for the current settings and marks the operating point.
 
-Sliders for effect size $d=(\mu' - \mu_0)/\sigma$ and sample size $n$ make the key relationships concrete:
-- Increasing $n$ squeezes both curves → less overlap → higher power
-- Shrinking $\alpha$ pushes the critical value out → $\beta$ increases (the $\alpha - \beta$ trade-off)
-- Conventional power targets (0.80 and 0.90) are marked on the power curve
+The non-centrality parameter is $\delta = d\sqrt{n}$, where $d = (\mu' - \mu_0)/\sigma$ is the standardized effect size. Sliders for $d$ and $n$ make the key relationships concrete:
+
+- Increasing $n$ squeezes both curves $\rightarrow$ less overlap $\rightarrow$ higher power
+- Shrinking $\alpha$ pushes the critical value out $\rightarrow$ $\beta$ increases (the $\alpha$–$\beta$ trade-off)
+- Conventional power targets of $0.80$ and $0.90$ are marked on the power curve
+
+The Type II error probability for an upper-tailed test at the true mean $\mu'$ is:
+
+$$\beta(\mu') = \Phi\!\left(z_\alpha - \frac{\mu' - \mu_0}{\sigma/\sqrt{n}}\right)$$
 
 ---
 
@@ -48,7 +62,11 @@ Sliders for effect size $d=(\mu' - \mu_0)/\sigma$ and sample size $n$ make the k
 
 Repeatedly samples from a population and draws each confidence interval as a horizontal bar. Green bars capture the true mean $\mu$; red bars miss it. A running coverage counter tracks the proportion of intervals that contained $\mu$, converging to the nominal confidence level over many trials.
 
-Controls for confidence level ($90\%,\, 95\%, \, 99\%$), sample size $n$, and animation speed. Step through one interval at a time or run hundreds automatically.
+Each interval is computed as:
+
+$$\bar{X} \pm z_{\alpha/2} \cdot \frac{\sigma}{\sqrt{n}}$$
+
+Controls for confidence level ($90\%$, $95\%$, $99\%$), sample size $n$, and animation speed. Step through one interval at a time or run hundreds automatically.
 
 ---
 
@@ -56,13 +74,27 @@ Controls for confidence level ($90\%,\, 95\%, \, 99\%$), sample size $n$, and an
 **File:** `test_selector.html`  
 **Covers:** Devore §8.2 – §8.4
 
-A step-by-step interactive decision tree. Students answer three questions about their data:
+A step-by-step interactive decision tree. Students answer questions about their data to arrive at the correct test:
 
 1. Are you testing a mean $\mu$ or a proportion $p$?
-2. Is $\sigma$ known? If not, is $n > 40$?
-3. Is the population approximately normal?
+2. Is $\sigma$ known?
+   - If **yes** $\rightarrow$ is the population approximately normal? If so, use the exact $Z$-test for any $n$.
+   - If **no** $\rightarrow$ is $n > 40$? If so, use the large-sample $Z$-test with $S$. Otherwise check normality for the $t$-test.
+3. For proportions: do $np_0 \geq 10$ and $n(1 - p_0) \geq 10$ hold?
 
 Each path resolves to the correct test with its formula, conditions, and Devore section reference. Warning cards are shown when standard test conditions are not met. A breadcrumb trail tracks the path taken, and a back button allows correction.
+
+---
+
+## Test Selection Summary
+
+$$\boxed{\sigma \text{ known, normal population, any } n \;\longrightarrow\; Z\text{-test (exact)}}$$
+
+$$\boxed{\sigma \text{ unknown, } n > 40 \;\longrightarrow\; Z\text{-test with } S \text{ (approximate, CLT)}}$$
+
+$$\boxed{\sigma \text{ unknown, } n \leq 40 \text{, normal population} \;\longrightarrow\; t\text{-test}}$$
+
+$$\boxed{np_0 \geq 10 \text{ and } n(1-p_0) \geq 10 \;\longrightarrow\; Z\text{-test for proportion}}$$
 
 ---
 
@@ -93,4 +125,4 @@ test_selector.html            ← Demo 4: Test selection flowchart
 
 ## License
 
-Created for instructional use in STAT 4340/ CS 4340/ OREM 3340 at SMU. Free to adapt for educational purposes with attribution.
+Created for instructional use in STAT 4340 / CS 4340 / OREM 3340 at SMU. Free to adapt for educational purposes with attribution.
