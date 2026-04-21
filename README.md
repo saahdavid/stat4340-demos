@@ -25,7 +25,7 @@ Demonstrates the fundamental equivalence between the two hypothesis testing deci
 
 > **p-value < α** ⟺ **test statistic falls in the rejection region**
 
-Features three test types selectable by tab — Z-test for μ (n > 40, σ unknown), one-sample t-test (n ≤ 40, σ unknown), and Z-test for proportion p. Interactive sliders for the test statistic, degrees of freedom, and α. A "when to use" panel and decision guide help students identify the correct test before computing.
+Features three test types selectable by tab — $Z$-test for $\mu$μ ($n > 40$, $\sigma$ unknown), one-sample $t$-test ($n \ge 40$, $\sigma$ unknown), and $Z$-test for proportion $p$. Interactive sliders for the test statistic, degrees of freedom, and $\alpha$. A "when to use" panel and decision guide help students identify the correct test before computing.
 
 ---
 
