@@ -309,20 +309,23 @@
   </div>
 
   <!-- Decision guide -->
-  <div style="background:#fff; border:1.5px solid rgba(0,0,0,0.10); border-radius:8px; padding:0.85rem 1.25rem; margin-bottom:1.4rem; font-size:0.88rem; line-height:1.8;">
-    <span style="font-size:0.68rem; text-transform:uppercase; letter-spacing:0.08em; color:#888780; font-family:'Courier New',monospace; display:block; margin-bottom:6px;">Which test should I use? (mean &mu;)</span>
+  <div style="background:#fff; border:1.5px solid rgba(0,0,0,0.10); border-radius:8px; padding:0.85rem 1.25rem; margin-bottom:1.4rem; font-size:0.87rem; line-height:2.0;">
+    <span style="font-size:0.68rem; text-transform:uppercase; letter-spacing:0.08em; color:#888780; font-family:'Courier New',monospace; display:block; margin-bottom:6px;">Which test should I use?</span>
+    <span style="color:#185FA5; font-weight:bold;">&sigma; known, normal population</span>
+    &nbsp;&rarr;&nbsp; <strong>Z-test</strong> (exact, any n) &nbsp;&nbsp;|&nbsp;&nbsp;
+    <span style="color:#0F6E56; font-weight:bold;">&sigma; unknown, n &gt; 40</span>
+    &nbsp;&rarr;&nbsp; <strong>Z-test</strong> (use S, approx.) &nbsp;&nbsp;|&nbsp;&nbsp;
     <span style="color:#A32D2D; font-weight:bold;">&sigma; unknown, n &le; 40, normal population</span>
     &nbsp;&rarr;&nbsp; <strong>t-test</strong> &nbsp;&nbsp;|&nbsp;&nbsp;
-    <span style="color:#0F6E56; font-weight:bold;">&sigma; unknown, n &gt; 40</span>
-    &nbsp;&rarr;&nbsp; <strong>Z-test</strong> (use S) &nbsp;&nbsp;|&nbsp;&nbsp;
     <span style="color:#534AB7; font-weight:bold;">proportion p</span>
     &nbsp;&rarr;&nbsp; <strong>Z-test</strong> (np&#8320; &ge; 10 &amp; n(1&minus;p&#8320;) &ge; 10)
   </div>
 
   <!-- Distribution tabs -->
   <div class="dist-tabs">
-    <button class="dist-tab active" data-dist="z-mean">Z-test &nbsp;(mean, n &gt; 40)</button>
-    <button class="dist-tab"        data-dist="t-mean">t-test &nbsp;(mean, &sigma; unknown)</button>
+    <button class="dist-tab active" data-dist="z-mean-exact">Z-test &nbsp;(&sigma; known, exact)</button>
+    <button class="dist-tab"        data-dist="z-mean">Z-test &nbsp;(n &gt; 40, &sigma; unknown)</button>
+    <button class="dist-tab"        data-dist="t-mean">t-test &nbsp;(n &le; 40, &sigma; unknown)</button>
     <button class="dist-tab"        data-dist="z-prop">Z-test &nbsp;(proportion)</button>
   </div>
 
@@ -538,7 +541,7 @@ function PDF(x, dist, nu) {
    STATE
 ═══════════════════════════════════════ */
 
-let currentDist = 'z-mean';
+let currentDist = 'z-mean-exact';
 
 /* ═══════════════════════════════════════
    CANVAS DRAWING
@@ -741,10 +744,15 @@ function draw() {
 ═══════════════════════════════════════ */
 
 const INFO = {
+  'z-mean-exact': {
+    use:     'Population is normal with \u03c3 known. Valid for any sample size n \u2014 no restriction. Z = (X\u0305 \u2212 \u03bc\u2080)/(\u03c3/\u221an) is exactly N(0,1) because X\u0305 is exactly normal. See Devore \u00a78.2.',
+    stat:    'Population mean \u03bc, \u03c3 known. Result is exact (not approximate) for any n.',
+    formula: 'Z = (X\u0305 \u2212 \u03bc\u2080) / (\u03c3 / \u221an)  ~  N(0, 1)  [exact]'
+  },
   'z-mean': {
-    use:     'n > 40 (large sample). \u03c3 is unknown \u2014 S is used in its place. Population need not be normal (CLT applies). See Devore \u00a78.2.',
+    use:     'n > 40 (large sample), \u03c3 unknown \u2014 S is used in its place. Population need not be normal (CLT applies). Result is approximate, not exact. See Devore \u00a78.2.',
     stat:    'Population mean \u03bc. S (sample std dev) substitutes for \u03c3. Approximate N(0,1) by CLT.',
-    formula: 'Z = (X\u0305 \u2212 \u03bc\u2080) / (S / \u221an)  \u2248  N(0, 1)'
+    formula: 'Z = (X\u0305 \u2212 \u03bc\u2080) / (S / \u221an)  \u2248  N(0, 1)  [approx.]'
   },
   't-mean': {
     use:     'n \u2264 40, \u03c3 unknown, population approximately normal. See Devore \u00a78.3.',
