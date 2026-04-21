@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Confidence Interval Simulator — STAT 4340</title>
+<style>
+  :root{
+    --purple:#534AB7;--purple-bg:#EEEDFE;--purple-mid:#7F77DD;
+    --teal:#0F6E56;--teal-bg:#E1F5EE;--teal-mid:#1D9E75;
+    --red:#A32D2D;--red-bg:#FCEBEB;--red-mid:#E24B4A;
+    --gray-light:#F1EFE8;--text:#2C2C2A;--text-muted:#888780;
+    --border:rgba(0,0,0,0.10);--bg:#F8F7F4;--card:#FFFFFF;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:Georgia,serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{background:var(--purple);color:white;padding:1rem 2.5rem;display:flex;align-items:baseline;gap:1.5rem;flex-wrap:wrap;}
+  header h1{font-size:1.2rem;font-weight:normal;}
+  header span{font-size:0.8rem;opacity:0.65;font-family:'Courier New',monospace;}
+  .main{max-width:980px;margin:0 auto;padding:1.75rem 2rem 2rem;}
+
+  .insight{background:var(--purple-bg);border-left:4px solid var(--purple);border-radius:0 8px 8px 0;padding:.85rem 1.25rem;margin-bottom:1.4rem;font-size:.95rem;line-height:1.6;}
+  .insight strong{color:var(--purple);}
+
+  .controls-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.1rem;margin-bottom:1rem;}
+  @media(max-width:640px){.controls-row{grid-template-columns:1fr;}}
+  .cg label{display:block;font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);font-family:'Courier New',monospace;margin-bottom:6px;}
+  .cg label .val{color:var(--text);font-size:.95rem;font-weight:bold;}
+  select{width:100%;padding:8px 28px 8px 10px;border:1.5px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);font-family:Georgia,serif;font-size:.92rem;cursor:pointer;outline:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;}
+  select:focus{border-color:var(--purple);}
+  input[type=range]{-webkit-appearance:none;width:100%;height:5px;border-radius:3px;outline:none;background:#D3D1C7;margin-top:4px;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--purple);cursor:pointer;box-shadow:0 1px 5px rgba(83,74,183,.4);}
+  input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--purple);cursor:pointer;border:none;}
+
+  .btn-row{display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1.2rem;align-items:center;}
+  button{padding:.55rem 1.2rem;border:1.5px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);font-family:Georgia,serif;font-size:.9rem;cursor:pointer;transition:background .12s;}
+  button:hover{background:var(--purple-bg);border-color:var(--purple);color:var(--purple);}
+  button.primary{background:var(--purple);color:white;border-color:var(--purple);}
+  button.primary:hover{background:var(--purple-mid);}
+  button.danger{background:var(--red-bg);border-color:rgba(163,45,45,.3);color:var(--red);}
+  button.danger:hover{background:var(--red-bg);border-color:var(--red);}
+  .auto-label{font-size:.82rem;color:var(--text-muted);font-family:'Courier New',monospace;}
+
+  .sim-layout{display:grid;grid-template-columns:1fr 220px;gap:1.1rem;margin-bottom:1.1rem;}
+  @media(max-width:680px){.sim-layout{grid-template-columns:1fr;}}
+  .canvas-wrap{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:.7rem .7rem .25rem;box-shadow:0 2px 12px rgba(0,0,0,.04);}
+  canvas{width:100%;display:block;}
+
+  .stats-panel{display:flex;flex-direction:column;gap:.75rem;}
+  .stat-box{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:.9rem 1rem;}
+  .stat-box .sb-label{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);font-family:'Courier New',monospace;margin-bottom:4px;}
+  .stat-box .sb-val{font-size:1.6rem;font-weight:bold;font-family:'Courier New',monospace;}
+  .stat-box .sb-sub{font-size:.8rem;color:var(--text-muted);margin-top:3px;line-height:1.4;}
+  .coverage-box{background:var(--teal-bg);border-color:rgba(15,110,86,.25);}
+  .coverage-box .sb-val{color:var(--teal);}
+  .miss-box{background:var(--red-bg);border-color:rgba(163,45,45,.2);}
+  .miss-box .sb-val{color:var(--red);}
+
+  .legend-row{display:flex;gap:1.2rem;flex-wrap:wrap;font-size:.84rem;align-items:center;margin-top:.5rem;}
+  .leg{display:flex;align-items:center;gap:7px;}
+  .ls{width:28px;height:8px;border-radius:3px;}
+
+  footer{text-align:center;padding:1.25rem;font-size:.75rem;color:var(--text-muted);font-family:'Courier New',monospace;border-top:1px solid var(--border);margin-top:2rem;}
+</style>
+</head>
+<body>
+<header>
+  <h1>Confidence Interval Simulator</h1>
+  <span>STAT 4340 / CS 4340 / OREM 3340 &nbsp;·&nbsp; SMU &nbsp;·&nbsp; Spring 2026</span>
+</header>
+<div class="main">
+
+  <div class="insight">
+    <strong>What this shows:</strong> Each horizontal bar is one confidence interval computed from a different random sample. The dashed line is the true population mean &mu;. Green bars capture &mu; — red bars miss it. In the long run, a 95% CI captures &mu; exactly 95% of the time.
+  </div>
+
+  <div class="controls-row">
+    <div class="cg">
+      <label>Confidence level</label>
+      <select id="confLevel">
+        <option value="0.90">90% confidence interval</option>
+        <option value="0.95" selected>95% confidence interval</option>
+        <option value="0.99">99% confidence interval</option>
+      </select>
+    </div>
+    <div class="cg">
+      <label>Sample size &nbsp;n = <span class="val" id="nLabel">30</span></label>
+      <input type="range" id="nSlider" min="5" max="100" step="1" value="30">
+    </div>
+    <div class="cg">
+      <label>Animation speed</label>
+      <select id="speed">
+        <option value="600">Slow</option>
+        <option value="200" selected>Medium</option>
+        <option value="60">Fast</option>
+        <option value="10">Very fast</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="primary" id="btnOne">+ 1 sample</button>
+    <button id="btnTen">+ 10 samples</button>
+    <button id="btnHundred">+ 100 samples</button>
+    <button id="btnAuto" class="primary">&#9654; Auto</button>
+    <button class="danger" id="btnReset">&#8635; Reset</button>
+    <span class="auto-label" id="autoLabel"></span>
+  </div>
+
+  <div class="sim-layout">
+    <div class="canvas-wrap">
+      <canvas id="simCanvas" aria-label="Stacked confidence intervals, green capturing true mean, red missing it"></canvas>
+    </div>
+    <div class="stats-panel">
+      <div class="stat-box">
+        <div class="sb-label">Total samples</div>
+        <div class="sb-val" id="totalVal">0</div>
+        <div class="sb-sub">intervals generated</div>
+      </div>
+      <div class="stat-box coverage-box">
+        <div class="sb-label">Coverage</div>
+        <div class="sb-val" id="coverageVal">—</div>
+        <div class="sb-sub">proportion capturing &mu;<br>target: <strong id="targetLabel">0.95</strong></div>
+      </div>
+      <div class="stat-box miss-box">
+        <div class="sb-label">Misses</div>
+        <div class="sb-val" id="missVal">0</div>
+        <div class="sb-sub">intervals that missed &mu;</div>
+      </div>
+      <div class="stat-box">
+        <div class="sb-label">CI width (avg)</div>
+        <div class="sb-val" id="widthVal">—</div>
+        <div class="sb-sub">= 2 &middot; z<sub>&alpha;/2</sub> &middot; &sigma;/&radic;n</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend-row">
+    <div class="leg"><div class="ls" style="background:rgba(29,158,117,.55);border:1px solid #0F6E56;"></div>CI contains &mu; (hit)</div>
+    <div class="leg"><div class="ls" style="background:rgba(226,75,74,.50);border:1px solid #A32D2D;"></div>CI misses &mu; (error)</div>
+    <div class="leg"><div class="ls" style="background:rgba(83,74,183,.6);width:3px;height:18px;border-radius:1px;"></div>True &mu; = 0</div>
+  </div>
+
+</div>
+<footer>STAT 4340 &nbsp;·&nbsp; Spring 2026 &nbsp;·&nbsp; Dr. David Saah &nbsp;·&nbsp; SMU</footer>
+
+<script>
+function invNorm(p){
+  const a=[-3.969683028665376e+01,2.209460984245205e+02,-2.759285104469687e+02,1.383577518672690e+02,-3.066479806614716e+01,2.506628277459239e+00];
+  const b=[-5.447609879822406e+01,1.615858368580409e+02,-1.556989798598866e+02,6.680131188771972e+01,-1.328068155288572e+01];
+  const c=[-7.784894002430293e-03,-3.223964580411365e-01,-2.400758277161838e+00,-2.549732539343734e+00,4.374664141464968e+00,2.938163982698783e+00];
+  const d2=[7.784695709041462e-03,3.224671290700398e-01,2.445134137142996e+00,3.754408661907416e+00];
+  const pLow=0.02425,pHigh=1-pLow;let q,r;
+  if(p<pLow){q=Math.sqrt(-2*Math.log(p));return(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d2[0]*q+d2[1])*q+d2[2])*q+d2[3])*q+1);}
+  else if(p<=pHigh){q=p-0.5;r=q*q;return(((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);}
+  else{q=Math.sqrt(-2*Math.log(1-p));return-(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d2[0]*q+d2[1])*q+d2[2])*q+d2[3])*q+1);}
+}
+
+function randNorm(){
+  let u,v,s;
+  do{u=Math.random()*2-1;v=Math.random()*2-1;s=u*u+v*v;}while(s>=1||s===0);
+  return u*Math.sqrt(-2*Math.log(s)/s);
+}
+
+// State
+const TRUE_MU=0,SIGMA=1;
+const MAX_DISPLAY=60;
+let intervals=[]; // {lo, hi, hit}
+let totalCount=0,hitCount=0;
+let autoTimer=null;
+
+function getParams(){
+  const conf=parseFloat(document.getElementById('confLevel').value);
+  const n=parseInt(document.getElementById('nSlider').value);
+  const z=invNorm(1-(1-conf)/2);
+  const se=SIGMA/Math.sqrt(n);
+  return{conf,n,z,se};
+}
+
+function generateOne(){
+  const{z,se,n}=getParams();
+  // Sample mean: X̄ ~ N(μ, σ²/n) → standardized N(0, 1/n)
+  let sum=0;for(let i=0;i<n;i++)sum+=randNorm();
+  const xbar=TRUE_MU+sum/n; // sum of n std normals / n = xbar with SE=1/√n
+  const lo=xbar-z*se,hi=xbar+z*se;
+  const hit=(lo<=TRUE_MU&&TRUE_MU<=hi);
+  totalCount++;if(hit)hitCount++;
+  intervals.push({lo,hi,hit});
+  if(intervals.length>MAX_DISPLAY)intervals.shift();
+}
+
+// Canvas
+const canvas=document.getElementById('simCanvas'),ctx=canvas.getContext('2d');
+
+function draw(){
+  const W=canvas.parentElement.clientWidth-22;
+  const ROW_H=9,PAD_V=6;
+  const H=Math.max(200,MAX_DISPLAY*ROW_H+PAD_V*2+40);
+  const dpr=window.devicePixelRatio||1;
+  canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width=W+'px';canvas.style.height=H+'px';
+  ctx.scale(dpr,dpr);
+
+  const pad={left:44,right:16,top:10,bottom:30};
+  const pW=W-pad.left-pad.right,pH=H-pad.top-pad.bottom;
+
+  ctx.clearRect(0,0,W,H);
+
+  // Axis range
+  const viewR=Math.max(2.5,invNorm(1-(1-parseFloat(document.getElementById('confLevel').value))/2)*1.5/Math.sqrt(parseInt(document.getElementById('nSlider').value)));
+  const xMin=-viewR*1.8,xMax=viewR*1.8;
+
+  function xc(v){return pad.left+(v-xMin)/(xMax-xMin)*pW;}
+
+  // Background grid
+  ctx.strokeStyle='rgba(0,0,0,0.05)';ctx.lineWidth=1;
+  [-2,-1,0,1,2].forEach(v=>{if(v>=xMin&&v<=xMax){ctx.beginPath();ctx.moveTo(xc(v),pad.top);ctx.lineTo(xc(v),pad.top+pH);ctx.stroke();}});
+
+  // CIs
+  const n_shown=intervals.length;
+  for(let i=0;i<n_shown;i++){
+    const ci=intervals[i];
+    const y=pad.top+(MAX_DISPLAY-n_shown+i)*ROW_H+ROW_H/2;
+    const x1=Math.max(xc(ci.lo),pad.left);
+    const x2=Math.min(xc(ci.hi),pad.left+pW);
+    const col=ci.hit?'rgba(29,158,117,0.55)':'rgba(226,75,74,0.55)';
+    const stroke=ci.hit?'#0F6E56':'#A32D2D';
+    ctx.fillStyle=col;ctx.fillRect(x1,y-ROW_H*0.35,x2-x1,ROW_H*0.7);
+    ctx.strokeStyle=stroke;ctx.lineWidth=1;ctx.strokeRect(x1,y-ROW_H*0.35,x2-x1,ROW_H*0.7);
+
+    // Endpoint ticks
+    ctx.strokeStyle=stroke;ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(xc(ci.lo),y-ROW_H*0.45);ctx.lineTo(xc(ci.lo),y+ROW_H*0.45);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(xc(ci.hi),y-ROW_H*0.45);ctx.lineTo(xc(ci.hi),y+ROW_H*0.45);ctx.stroke();
+  }
+
+  // True μ line
+  ctx.strokeStyle='rgba(83,74,183,0.75)';ctx.lineWidth=2;ctx.setLineDash([5,4]);
+  ctx.beginPath();ctx.moveTo(xc(TRUE_MU),pad.top);ctx.lineTo(xc(TRUE_MU),pad.top+pH);ctx.stroke();
+  ctx.setLineDash([]);
+
+  // x-axis
+  ctx.strokeStyle='rgba(0,0,0,0.15)';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(pad.left,pad.top+pH);ctx.lineTo(pad.left+pW,pad.top+pH);ctx.stroke();
+
+  ctx.fillStyle='#888780';ctx.font='11px Georgia,serif';ctx.textAlign='center';
+  [-2,-1,0,1,2].forEach(v=>{if(v>=xMin&&v<=xMax)ctx.fillText(v,xc(v),pad.top+pH+18);});
+  ctx.fillText('\u03bc\u2080 = 0 (true mean)',xc(0),pad.top+pH+30);
+
+  // μ label on line
+  ctx.fillStyle='#534AB7';ctx.font='bold 11px Courier New,monospace';ctx.textAlign='center';
+  ctx.fillText('\u03bc',xc(TRUE_MU),pad.top+10);
+
+  // "most recent" label
+  if(n_shown>0){
+    const y_recent=pad.top+(MAX_DISPLAY-1)*ROW_H+ROW_H/2;
+    ctx.fillStyle='rgba(0,0,0,0.25)';ctx.font='10px Georgia,serif';ctx.textAlign='right';
+    ctx.fillText('\u2190 most recent',pad.left-4,y_recent+4);
+  }
+}
+
+function updateStats(){
+  const{conf,se,z}=getParams();
+  document.getElementById('nLabel').textContent=document.getElementById('nSlider').value;
+  document.getElementById('totalVal').textContent=totalCount;
+  document.getElementById('coverageVal').textContent=totalCount>0?(hitCount/totalCount).toFixed(3):'—';
+  document.getElementById('missVal').textContent=totalCount-hitCount;
+  document.getElementById('widthVal').textContent=totalCount>0?(2*z*se).toFixed(3):'—';
+  document.getElementById('targetLabel').textContent=conf.toFixed(2);
+}
+
+function step(k){for(let i=0;i<k;i++)generateOne();draw();updateStats();}
+
+function startAuto(){
+  if(autoTimer)return;
+  document.getElementById('btnAuto').textContent='⏸ Pause';
+  document.getElementById('autoLabel').textContent='running…';
+  function tick(){const sp=parseInt(document.getElementById('speed').value);generateOne();draw();updateStats();autoTimer=setTimeout(tick,sp);}
+  tick();
+}
+function stopAuto(){
+  clearTimeout(autoTimer);autoTimer=null;
+  document.getElementById('btnAuto').textContent='▶ Auto';
+  document.getElementById('autoLabel').textContent='';
+}
+
+document.getElementById('btnOne').addEventListener('click',()=>{stopAuto();step(1);});
+document.getElementById('btnTen').addEventListener('click',()=>{stopAuto();step(10);});
+document.getElementById('btnHundred').addEventListener('click',()=>{stopAuto();step(100);});
+document.getElementById('btnAuto').addEventListener('click',()=>{autoTimer?stopAuto():startAuto();});
+document.getElementById('btnReset').addEventListener('click',()=>{
+  stopAuto();intervals=[];totalCount=0;hitCount=0;draw();updateStats();
+});
+document.getElementById('nSlider').addEventListener('input',()=>{stopAuto();intervals=[];totalCount=0;hitCount=0;draw();updateStats();});
+document.getElementById('confLevel').addEventListener('change',()=>{stopAuto();intervals=[];totalCount=0;hitCount=0;draw();updateStats();});
+window.addEventListener('resize',()=>{draw();});
+
+draw();updateStats();
+</script>
+</body>
+</html>

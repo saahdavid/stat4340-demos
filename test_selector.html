@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test Selection Guide — STAT 4340</title>
+<style>
+  :root{
+    --purple:#534AB7;--purple-bg:#EEEDFE;--purple-mid:#7F77DD;
+    --teal:#0F6E56;--teal-bg:#E1F5EE;--teal-mid:#1D9E75;
+    --red:#A32D2D;--red-bg:#FCEBEB;
+    --amber:#854F0B;--amber-bg:#FAEEDA;
+    --blue:#185FA5;--blue-bg:#E6F1FB;
+    --gray-light:#F1EFE8;--text:#2C2C2A;--text-muted:#888780;
+    --border:rgba(0,0,0,0.10);--bg:#F8F7F4;--card:#FFFFFF;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:Georgia,serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{background:var(--purple);color:white;padding:1rem 2.5rem;display:flex;align-items:baseline;gap:1.5rem;flex-wrap:wrap;}
+  header h1{font-size:1.2rem;font-weight:normal;}
+  header span{font-size:0.8rem;opacity:0.65;font-family:'Courier New',monospace;}
+  .main{max-width:760px;margin:0 auto;padding:1.75rem 2rem 2rem;}
+
+  /* Breadcrumb trail */
+  .trail{display:flex;flex-wrap:wrap;gap:0;align-items:center;min-height:36px;margin-bottom:1.5rem;font-size:.82rem;font-family:'Courier New',monospace;}
+  .trail-step{background:var(--gray-light);border:1px solid var(--border);padding:5px 12px;color:var(--text-muted);}
+  .trail-step:first-child{border-radius:6px 0 0 6px;}
+  .trail-step.choice{background:var(--purple-bg);color:var(--purple);}
+  .trail-arrow{color:var(--text-muted);font-size:1rem;padding:0 2px;}
+
+  /* Question card */
+  .q-card{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:1.75rem 2rem;margin-bottom:1.4rem;box-shadow:0 2px 14px rgba(0,0,0,.04);}
+  .q-num{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);font-family:'Courier New',monospace;margin-bottom:.6rem;}
+  .q-text{font-size:1.18rem;line-height:1.55;margin-bottom:1.4rem;color:var(--text);}
+  .q-context{font-size:.87rem;color:var(--text-muted);margin-bottom:1.3rem;padding:.65rem 1rem;background:var(--gray-light);border-radius:6px;line-height:1.55;}
+  .q-context strong{color:var(--text);}
+
+  /* Option buttons */
+  .options{display:flex;flex-direction:column;gap:.7rem;}
+  .opt-btn{display:flex;align-items:center;gap:1rem;padding:.85rem 1.25rem;border:1.5px solid var(--border);border-radius:8px;background:var(--card);color:var(--text);font-family:Georgia,serif;font-size:.95rem;cursor:pointer;text-align:left;transition:all .13s;line-height:1.45;}
+  .opt-btn:hover{border-color:var(--purple);background:var(--purple-bg);color:var(--purple);}
+  .opt-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;font-family:'Courier New',monospace;font-weight:bold;}
+  .opt-icon.yes{background:var(--teal-bg);color:var(--teal);}
+  .opt-icon.no {background:var(--red-bg);color:var(--red);}
+  .opt-icon.a  {background:var(--purple-bg);color:var(--purple);}
+  .opt-icon.b  {background:var(--blue-bg);color:var(--blue);}
+  .opt-icon.c  {background:var(--amber-bg);color:var(--amber);}
+
+  /* Result card */
+  .result-card{border-radius:12px;padding:1.75rem 2rem;margin-bottom:1.4rem;}
+  .result-card .rc-badge{display:inline-block;font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;font-family:'Courier New',monospace;padding:4px 12px;border-radius:20px;margin-bottom:.8rem;font-weight:bold;}
+  .result-card h2{font-size:1.35rem;font-weight:normal;margin-bottom:.5rem;}
+  .result-card .rc-stat{font-family:'Courier New',monospace;font-size:1.05rem;margin-bottom:.4rem;}
+  .result-card .rc-formula{font-family:'Courier New',monospace;font-size:1.1rem;background:rgba(255,255,255,.6);border-radius:6px;padding:.65rem 1rem;margin:.85rem 0;border:1px solid rgba(0,0,0,.08);}
+  .result-card .rc-cond{font-size:.87rem;line-height:1.6;margin-top:.75rem;}
+  .result-card .rc-cond strong{font-style:normal;}
+  .result-card .rc-ref{font-size:.78rem;font-family:'Courier New',monospace;margin-top:.75rem;opacity:.7;}
+
+  .r-z    {background:var(--teal-bg);border:1.5px solid rgba(15,110,86,.3);}
+  .r-z    .rc-badge{background:var(--teal);color:white;}
+  .r-z    h2,.r-z .rc-stat{color:var(--teal);}
+  .r-t    {background:var(--blue-bg);border:1.5px solid rgba(24,95,165,.3);}
+  .r-t    .rc-badge{background:var(--blue);color:white;}
+  .r-t    h2,.r-t .rc-stat{color:var(--blue);}
+  .r-zp   {background:var(--purple-bg);border:1.5px solid rgba(83,74,183,.3);}
+  .r-zp   .rc-badge{background:var(--purple);color:white;}
+  .r-zp   h2,.r-zp .rc-stat{color:var(--purple);}
+  .r-warn {background:var(--amber-bg);border:1.5px solid rgba(133,79,11,.3);}
+  .r-warn .rc-badge{background:var(--amber);color:white;}
+  .r-warn h2{color:var(--amber);}
+
+  /* Back / restart buttons */
+  .nav-row{display:flex;gap:.75rem;flex-wrap:wrap;}
+  button.back{padding:.55rem 1.2rem;border:1.5px solid var(--border);border-radius:6px;background:var(--card);color:var(--text-muted);font-family:Georgia,serif;font-size:.88rem;cursor:pointer;}
+  button.back:hover{border-color:var(--purple);color:var(--purple);background:var(--purple-bg);}
+  button.restart{padding:.55rem 1.2rem;border:1.5px solid rgba(163,45,45,.3);border-radius:6px;background:var(--red-bg);color:var(--red);font-family:Georgia,serif;font-size:.88rem;cursor:pointer;}
+  button.restart:hover{border-color:var(--red);}
+
+  footer{text-align:center;padding:1.25rem;font-size:.75rem;color:var(--text-muted);font-family:'Courier New',monospace;border-top:1px solid var(--border);margin-top:2rem;}
+</style>
+</head>
+<body>
+<header>
+  <h1>Hypothesis Test Selection Guide</h1>
+  <span>STAT 4340 / CS 4340 / OREM 3340 &nbsp;·&nbsp; SMU &nbsp;·&nbsp; Spring 2026</span>
+</header>
+<div class="main">
+  <div class="trail" id="trail"></div>
+  <div id="screen"></div>
+  <div class="nav-row" id="navRow"></div>
+</div>
+<footer>STAT 4340 &nbsp;·&nbsp; Spring 2026 &nbsp;·&nbsp; Dr. David Saah &nbsp;·&nbsp; SMU</footer>
+
+<script>
+/* ── Tree definition ── */
+const TREE = {
+  start: {
+    num: 'Step 1 of 3',
+    q: 'What parameter are you testing a hypothesis about?',
+    ctx: 'Identify the population parameter of interest before choosing a test.',
+    opts: [
+      { icon:'A', cls:'a', label:'Population mean &mu;',          sub:'Testing whether the average of a quantitative variable equals a specific value.',  next:'mean_sigma' },
+      { icon:'B', cls:'b', label:'Population proportion p',       sub:'Testing whether the fraction of a population with a characteristic equals a specific value.', next:'prop_check' },
+    ]
+  },
+
+  mean_sigma: {
+    num: 'Step 2 of 3',
+    q: 'Is the population standard deviation &sigma; known?',
+    ctx: '<strong>Known &sigma;:</strong> rare in practice — requires prior knowledge or given explicitly in the problem.<br><strong>Unknown &sigma;:</strong> the typical case; S (sample std dev) is computed from the data.',
+    opts: [
+      { icon:'✓', cls:'yes', label:'Yes — &sigma; is known',                    sub:'The exact population standard deviation is given in the problem.',  next:'result_z_sigma' },
+      { icon:'✗', cls:'no',  label:'No — &sigma; is unknown, I will use S',     sub:'I will estimate &sigma; with the sample standard deviation S.', next:'mean_n' },
+    ]
+  },
+
+  mean_n: {
+    num: 'Step 3 of 3',
+    q: 'What is the sample size n?',
+    ctx: '<strong>Large sample (n &gt; 40):</strong> by the CLT, Z = (X&#772; &minus; &mu;&#8320;)/(S/&radic;n) &approx; N(0,1). S is a good substitute for &sigma;.<br><strong>Small sample (n &le; 40):</strong> the CLT does not apply; normality of the population is required and the t-distribution must be used.',
+    opts: [
+      { icon:'✓', cls:'yes', label:'n &gt; 40 &nbsp;(large sample)',             sub:'CLT justifies using Z with S in place of &sigma;.',    next:'result_z_large' },
+      { icon:'✗', cls:'no',  label:'n &le; 40 &nbsp;(small sample)',             sub:'Need to check population normality and use t.',        next:'mean_normal' },
+    ]
+  },
+
+  mean_normal: {
+    num: 'Step 3 of 3 (continued)',
+    q: 'Is the population approximately normally distributed?',
+    ctx: 'Check with a <strong>normal probability plot</strong> or histogram. If n is small and the population is far from normal, standard t-procedures are not valid.',
+    opts: [
+      { icon:'✓', cls:'yes', label:'Yes — population is approximately normal',  sub:'Proceed with the one-sample t-test.',               next:'result_t' },
+      { icon:'✗', cls:'no',  label:'No — population is clearly non-normal',     sub:'Standard parametric tests may not be appropriate.',  next:'result_nonparam' },
+    ]
+  },
+
+  prop_check: {
+    num: 'Step 2 of 2',
+    q: 'Do both large-sample conditions hold?',
+    ctx: 'The Z-test for a proportion requires <strong>np&#8320; &ge; 10</strong> and <strong>n(1 &minus; p&#8320;) &ge; 10</strong>, where p&#8320; is the null hypothesis value.<br>These ensure the sampling distribution of p&#770; is approximately normal.',
+    opts: [
+      { icon:'✓', cls:'yes', label:'Yes — np&#8320; &ge; 10 and n(1 &minus; p&#8320;) &ge; 10',  sub:'Both conditions satisfied; Z-test is valid.',             next:'result_z_prop' },
+      { icon:'✗', cls:'no',  label:'No — one or both conditions fail',                            sub:'Sample is too small for the Z approximation.',            next:'result_exact' },
+    ]
+  },
+
+  /* ── Results ── */
+  result_z_sigma: {
+    result: true, cls:'r-z',
+    badge:'Z-test — &sigma; known',
+    title:'One-sample Z-test for &mu;',
+    stat:'H&#8320;: &mu; = &mu;&#8320;',
+    formula:'Z = (X&#772; &minus; &mu;&#8320;) / (&sigma; / &radic;n) &nbsp;~&nbsp; N(0, 1)',
+    cond:'<strong>When to use:</strong> &sigma; is known (given). Population need not be normal if n is large, but for small n the population should be approximately normal.<br><strong>Critical values:</strong> z&#x03B1; from the standard normal table.',
+    ref:'Devore §8.2'
+  },
+
+  result_z_large: {
+    result: true, cls:'r-z',
+    badge:'Z-test — large sample',
+    title:'One-sample Z-test for &mu; &nbsp;(n &gt; 40, &sigma; unknown)',
+    stat:'H&#8320;: &mu; = &mu;&#8320;',
+    formula:'Z = (X&#772; &minus; &mu;&#8320;) / (S / &radic;n) &nbsp;&approx;&nbsp; N(0, 1)',
+    cond:'<strong>When to use:</strong> &sigma; is unknown but n &gt; 40. The CLT ensures Z &approx; N(0,1) regardless of the population shape. S substitutes for &sigma; with negligible extra variability.<br><strong>Critical values:</strong> z&#x03B1; from the standard normal table.',
+    ref:'Devore §8.2 — see course notes: rule of thumb n &gt; 40'
+  },
+
+  result_t: {
+    result: true, cls:'r-t',
+    badge:'t-test',
+    title:'One-sample t-test for &mu; &nbsp;(n &le; 40, &sigma; unknown)',
+    stat:'H&#8320;: &mu; = &mu;&#8320;',
+    formula:'T = (X&#772; &minus; &mu;&#8320;) / (S / &radic;n) &nbsp;~&nbsp; t<sub>n&minus;1</sub>',
+    cond:'<strong>When to use:</strong> &sigma; unknown, n &le; 40, and the population is approximately normal. Degrees of freedom = n &minus; 1.<br><strong>Critical values:</strong> t&#x03B1;,&nu; from the t-table (Appendix A.5 in Devore).',
+    ref:'Devore §8.3'
+  },
+
+  result_z_prop: {
+    result: true, cls:'r-zp',
+    badge:'Z-test — proportion',
+    title:'One-sample Z-test for proportion p',
+    stat:'H&#8320;: p = p&#8320;',
+    formula:'Z = (p&#770; &minus; p&#8320;) / &radic;[p&#8320;(1&minus;p&#8320;)/n] &nbsp;~&nbsp; N(0, 1)',
+    cond:'<strong>When to use:</strong> np&#8320; &ge; 10 and n(1&minus;p&#8320;) &ge; 10. The standard deviation is fully determined under H&#8320; — no substitution needed.<br><strong>Critical values:</strong> z&#x03B1; from the standard normal table.',
+    ref:'Devore §8.4'
+  },
+
+  result_nonparam: {
+    result: true, cls:'r-warn',
+    badge:'Warning',
+    title:'Standard parametric test may not apply',
+    stat: '',
+    formula:'',
+    cond:'With n &le; 40 and a clearly non-normal population, the one-sample t-test is not reliable. Options include:<br>&bull; Collect a larger sample (n &gt; 40) so the CLT applies.<br>&bull; Use a nonparametric test (e.g., Wilcoxon signed-rank test — see Devore §15).<br>&bull; Apply a normalizing transformation (e.g., log transform).',
+    ref:'Devore §15.4'
+  },
+
+  result_exact: {
+    result: true, cls:'r-warn',
+    badge:'Warning — sample too small',
+    title:'Large-sample Z conditions not met',
+    stat:'',
+    formula:'',
+    cond:'When np&#8320; &lt; 10 or n(1&minus;p&#8320;) &lt; 10, the normal approximation for p&#770; is poor.<br>Use the <strong>exact binomial test</strong>: compute P(X &le; x) or P(X &ge; x) directly from Bin(n, p&#8320;).',
+    ref:'Devore §8.4 footnote'
+  }
+};
+
+/* ── State ── */
+let history = []; // [{nodeId, choiceLabel}]
+
+/* ── Render ── */
+function render(nodeId) {
+  const node = TREE[nodeId];
+  const screenEl  = document.getElementById('screen');
+  const trailEl   = document.getElementById('trail');
+  const navEl     = document.getElementById('navRow');
+
+  // Trail
+  trailEl.innerHTML = '';
+  history.forEach((h, i) => {
+    if(i > 0) { const arr=document.createElement('span'); arr.className='trail-arrow'; arr.textContent='›'; trailEl.appendChild(arr); }
+    const s=document.createElement('span'); s.className='trail-step choice'; s.textContent=h.label; trailEl.appendChild(s);
+  });
+
+  // Screen
+  if(node.result) {
+    let html = `<div class="result-card ${node.cls}">
+      <span class="rc-badge">${node.badge}</span>
+      <h2>${node.title}</h2>`;
+    if(node.stat) html += `<div class="rc-stat">${node.stat}</div>`;
+    if(node.formula) html += `<div class="rc-formula">${node.formula}</div>`;
+    html += `<div class="rc-cond">${node.cond}</div>`;
+    if(node.ref) html += `<div class="rc-ref">Reference: ${node.ref}</div>`;
+    html += `</div>`;
+    screenEl.innerHTML = html;
+
+    navEl.innerHTML = '';
+    if(history.length > 0) {
+      const b=document.createElement('button'); b.className='back'; b.textContent='← Back';
+      b.onclick=()=>{ history.pop(); render(history.length>0?null:null); goBack(); };
+      navEl.appendChild(b);
+    }
+    const r=document.createElement('button'); r.className='restart'; r.textContent='↺ Start over';
+    r.onclick=restart; navEl.appendChild(r);
+  } else {
+    let html = `<div class="q-card">
+      <div class="q-num">${node.num}</div>
+      <div class="q-text">${node.q}</div>`;
+    if(node.ctx) html += `<div class="q-context">${node.ctx}</div>`;
+    html += `<div class="options">`;
+    node.opts.forEach((opt, idx) => {
+      html += `<button class="opt-btn" data-next="${opt.next}" data-label="${stripTags(opt.label)}">
+        <span class="opt-icon ${opt.cls}">${opt.icon}</span>
+        <span><strong>${opt.label}</strong><br><span style="font-size:.83rem;color:#888780;">${opt.sub}</span></span>
+      </button>`;
+    });
+    html += `</div></div>`;
+    screenEl.innerHTML = html;
+
+    // Attach click handlers
+    screenEl.querySelectorAll('.opt-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        history.push({ nodeId, label: btn.dataset.label });
+        render(btn.dataset.next);
+      });
+    });
+
+    navEl.innerHTML = '';
+    if(history.length > 0) {
+      const b=document.createElement('button'); b.className='back'; b.textContent='← Back';
+      b.onclick=goBack; navEl.appendChild(b);
+    }
+    const r=document.createElement('button'); r.className='restart'; r.textContent='↺ Start over';
+    r.onclick=restart; navEl.appendChild(r);
+  }
+}
+
+function goBack() {
+  if(history.length === 0) { restart(); return; }
+  const prev = history[history.length-1];
+  history.pop();
+  render(prev.nodeId);
+}
+
+function restart() { history=[]; render('start'); }
+function stripTags(s){ return s.replace(/<[^>]*>/g,''); }
+
+restart();
+</script>
+</body>
+</html>

@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hypothesis Test Decisions — STAT 4340</title>
+<style>
+  :root {
+    --purple:      #534AB7;
+    --purple-bg:   #EEEDFE;
+    --purple-mid:  #7F77DD;
+    --teal:        #0F6E56;
+    --teal-bg:     #E1F5EE;
+    --teal-mid:    #1D9E75;
+    --red:         #A32D2D;
+    --red-bg:      #FCEBEB;
+    --red-mid:     #E24B4A;
+    --amber:       #854F0B;
+    --amber-bg:    #FAEEDA;
+    --amber-mid:   #BA7517;
+    --gray:        #5F5E5A;
+    --gray-light:  #F1EFE8;
+    --text:        #2C2C2A;
+    --text-muted:  #888780;
+    --border:      rgba(0,0,0,0.10);
+    --bg:          #F8F7F4;
+    --card:        #FFFFFF;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: Georgia, serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--purple);
+    color: white;
+    padding: 1rem 2.5rem;
+    display: flex;
+    align-items: baseline;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+  header h1 { font-size: 1.2rem; font-weight: normal; letter-spacing: 0.01em; }
+  header span { font-size: 0.8rem; opacity: 0.65; font-family: 'Courier New', monospace; }
+
+  .main { max-width: 1000px; margin: 0 auto; padding: 1.75rem 2rem 2rem; }
+
+  /* ── Equivalence bar ── */
+  .eq-bar {
+    background: var(--purple-bg);
+    border-left: 4px solid var(--purple);
+    border-radius: 0 8px 8px 0;
+    padding: 0.85rem 1.25rem;
+    margin-bottom: 1.6rem;
+    font-size: 0.97rem;
+    line-height: 1.6;
+  }
+  .eq-bar strong { color: var(--purple); }
+
+  /* ── Tab strip for distribution choice ── */
+  .dist-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 1.4rem;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    width: fit-content;
+  }
+  .dist-tab {
+    padding: 0.6rem 1.1rem;
+    font-family: Georgia, serif;
+    font-size: 0.88rem;
+    cursor: pointer;
+    border: none;
+    background: var(--card);
+    color: var(--text-muted);
+    border-right: 1px solid var(--border);
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+  }
+  .dist-tab:last-child { border-right: none; }
+  .dist-tab.active { background: var(--purple); color: white; font-weight: bold; }
+  .dist-tab:hover:not(.active) { background: var(--purple-bg); color: var(--purple); }
+
+  /* ── Info box ── */
+  .info-box {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 1.4rem;
+  }
+  @media (max-width: 600px) { .info-box { grid-template-columns: 1fr; } }
+
+  .info-card {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 0.8rem 1rem;
+  }
+  .info-card.highlight { border-color: var(--purple); background: var(--purple-bg); }
+  .info-card .ic-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    font-family: 'Courier New', monospace;
+    margin-bottom: 5px;
+  }
+  .info-card .ic-label.active-label { color: var(--purple); }
+  .info-card p { font-size: 0.88rem; line-height: 1.55; color: var(--text); }
+  .info-card p.formula {
+    font-family: 'Courier New', monospace;
+    font-size: 0.92rem;
+    margin-top: 5px;
+    color: var(--purple);
+  }
+
+  /* ── Controls ── */
+  .controls-row {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 1fr;
+    gap: 1.1rem;
+    margin-bottom: 0.9rem;
+  }
+  .controls-row-2 {
+    display: grid;
+    gap: 1.1rem;
+    margin-bottom: 1.4rem;
+  }
+  @media (max-width: 640px) {
+    .controls-row { grid-template-columns: 1fr; }
+    .controls-row-2 { grid-template-columns: 1fr; }
+  }
+
+  .control-group label {
+    display: block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-muted);
+    font-family: 'Courier New', monospace;
+    margin-bottom: 6px;
+  }
+  .control-group label .val {
+    color: var(--text);
+    font-size: 0.95rem;
+    font-weight: bold;
+  }
+
+  select {
+    width: 100%;
+    padding: 8px 28px 8px 10px;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    background: var(--card);
+    color: var(--text);
+    font-family: Georgia, serif;
+    font-size: 0.93rem;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+  }
+  select:focus { border-color: var(--purple); }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 5px;
+    border-radius: 3px;
+    outline: none;
+    background: #D3D1C7;
+    margin-top: 4px;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--purple);
+    cursor: pointer;
+    box-shadow: 0 1px 5px rgba(83,74,183,0.4);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 20px; height: 20px;
+    border-radius: 50%; background: var(--purple);
+    cursor: pointer; border: none;
+    box-shadow: 0 1px 5px rgba(83,74,183,0.4);
+  }
+  input[type=range].teal-thumb::-webkit-slider-thumb { background: var(--teal-mid); box-shadow: 0 1px 5px rgba(29,158,117,0.4); }
+  input[type=range].teal-thumb::-moz-range-thumb { background: var(--teal-mid); }
+
+  .df-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; }
+  @media (max-width: 640px) { .df-row { grid-template-columns: 1fr; } }
+
+  .df-note {
+    font-size: 0.78rem;
+    color: var(--amber);
+    font-family: 'Courier New', monospace;
+    margin-top: 4px;
+    min-height: 1.2em;
+  }
+
+  /* ── Canvas ── */
+  .canvas-wrap {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 0.75rem 0.75rem 0.25rem;
+    margin-bottom: 1.1rem;
+    box-shadow: 0 2px 14px rgba(0,0,0,0.04);
+  }
+  canvas { width: 100%; display: block; }
+
+  /* ── RR formula ── */
+  .rr-formula {
+    background: var(--gray-light);
+    border-radius: 8px;
+    padding: 0.7rem 1.1rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.97rem;
+    color: var(--text);
+    margin-bottom: 1rem;
+    letter-spacing: 0.01em;
+  }
+
+  /* ── Decision cards ── */
+  .decisions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 0.9rem;
+  }
+  @media (max-width: 540px) { .decisions-grid { grid-template-columns: 1fr; } }
+
+  .dec-card {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 0.9rem 1.1rem;
+  }
+  .dec-card .dc-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    font-family: 'Courier New', monospace;
+    margin-bottom: 5px;
+  }
+  .dec-card .dc-value {
+    font-family: 'Courier New', monospace;
+    font-size: 1.05rem;
+    font-weight: bold;
+    margin-bottom: 4px;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .dec-card .dc-logic {
+    font-size: 0.86rem;
+    color: var(--text-muted);
+    line-height: 1.55;
+  }
+
+  #conclusion {
+    border-radius: 10px;
+    padding: 0.85rem 1.5rem;
+    font-size: 1rem;
+    font-weight: bold;
+    text-align: center;
+    transition: background 0.2s, color 0.2s;
+  }
+  .c-reject { background: var(--teal-bg); color: var(--teal); border: 1.5px solid rgba(15,110,86,0.22); }
+  .c-ftr    { background: var(--red-bg);  color: var(--red);  border: 1.5px solid rgba(163,45,45,0.18); }
+
+  footer {
+    text-align: center;
+    padding: 1.25rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-family: 'Courier New', monospace;
+    border-top: 1px solid var(--border);
+    margin-top: 2rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Hypothesis Test Decisions — Rejection Region &amp; p-value</h1>
+  <span>STAT 4340 / CS 4340 / OREM 3340 &nbsp;·&nbsp; SMU &nbsp;·&nbsp; Spring 2026</span>
+</header>
+
+<div class="main">
+
+  <div class="eq-bar">
+    <strong>Key equivalence:</strong>
+    &nbsp; p-value &lt; &alpha;
+    &nbsp;&hArr;&nbsp; test statistic falls in the rejection region.
+    &nbsp; Both decision methods always agree — they are two ways of saying the same thing.
+  </div>
+
+  <!-- Decision guide -->
+  <div style="background:#fff; border:1.5px solid rgba(0,0,0,0.10); border-radius:8px; padding:0.85rem 1.25rem; margin-bottom:1.4rem; font-size:0.88rem; line-height:1.8;">
+    <span style="font-size:0.68rem; text-transform:uppercase; letter-spacing:0.08em; color:#888780; font-family:'Courier New',monospace; display:block; margin-bottom:6px;">Which test should I use? (mean &mu;)</span>
+    <span style="color:#A32D2D; font-weight:bold;">&sigma; unknown, n &le; 40, normal population</span>
+    &nbsp;&rarr;&nbsp; <strong>t-test</strong> &nbsp;&nbsp;|&nbsp;&nbsp;
+    <span style="color:#0F6E56; font-weight:bold;">&sigma; unknown, n &gt; 40</span>
+    &nbsp;&rarr;&nbsp; <strong>Z-test</strong> (use S) &nbsp;&nbsp;|&nbsp;&nbsp;
+    <span style="color:#534AB7; font-weight:bold;">proportion p</span>
+    &nbsp;&rarr;&nbsp; <strong>Z-test</strong> (np&#8320; &ge; 10 &amp; n(1&minus;p&#8320;) &ge; 10)
+  </div>
+
+  <!-- Distribution tabs -->
+  <div class="dist-tabs">
+    <button class="dist-tab active" data-dist="z-mean">Z-test &nbsp;(mean, n &gt; 40)</button>
+    <button class="dist-tab"        data-dist="t-mean">t-test &nbsp;(mean, &sigma; unknown)</button>
+    <button class="dist-tab"        data-dist="z-prop">Z-test &nbsp;(proportion)</button>
+  </div>
+
+  <!-- Info cards -->
+  <div class="info-box">
+    <div class="info-card highlight" id="infoUse">
+      <div class="ic-label active-label">When to use this test</div>
+      <p id="infoUseText"></p>
+    </div>
+    <div class="info-card" id="infoStat">
+      <div class="ic-label">Test statistic formula</div>
+      <p id="infoStatText"></p>
+      <p class="formula" id="infoFormula"></p>
+    </div>
+  </div>
+
+  <!-- Controls row 1 -->
+  <div class="controls-row">
+    <div class="control-group">
+      <label>Alternative hypothesis H<sub>a</sub></label>
+      <select id="testType">
+        <option value="upper">H&#8336;: parameter &gt; null value &nbsp;(upper-tailed)</option>
+        <option value="lower">H&#8336;: parameter &lt; null value &nbsp;(lower-tailed)</option>
+        <option value="two">H&#8336;: parameter &ne; null value &nbsp;(two-tailed)</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label>Significance level &alpha;</label>
+      <select id="alphaSelect">
+        <option value="0.10">&alpha; = 0.10</option>
+        <option value="0.05" selected>&alpha; = 0.05</option>
+        <option value="0.01">&alpha; = 0.01</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label>Test statistic &nbsp;<span id="statSymbol">z</span> = <span class="val" id="statLabel">+1.80</span></label>
+      <input type="range" id="statSlider" class="teal-thumb" min="-5" max="5" step="0.05" value="1.8">
+    </div>
+  </div>
+
+  <!-- Controls row 2: df (t-test only) -->
+  <div id="dfRow" class="controls-row-2" style="display:none;">
+    <div class="df-row">
+      <div class="control-group">
+        <label>Degrees of freedom &nbsp;&nu; = n &minus; 1 = <span class="val" id="dfLabel">10</span></label>
+        <input type="range" id="dfSlider" min="1" max="120" step="1" value="10">
+      </div>
+      <div style="display:flex; align-items:flex-end; padding-bottom:4px;">
+        <div>
+          <div class="df-note" id="dfNote"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Canvas -->
+  <div class="canvas-wrap">
+    <canvas id="distCanvas" aria-label="Distribution curve with rejection region and test statistic marked"></canvas>
+  </div>
+
+  <div class="rr-formula" id="rrFormulaBox"></div>
+
+  <div class="decisions-grid">
+    <div class="dec-card">
+      <div class="dc-label">p-value method &nbsp;(you know this)</div>
+      <div class="dc-value" id="pvalDisplay"></div>
+      <div class="dc-logic" id="pvalLogic"></div>
+    </div>
+    <div class="dec-card">
+      <div class="dc-label">Rejection region method &nbsp;(new)</div>
+      <div class="dc-value" id="rrDisplay"></div>
+      <div class="dc-logic" id="rrLogic"></div>
+    </div>
+  </div>
+
+  <div id="conclusion"></div>
+
+</div>
+
+<footer>STAT 4340 &nbsp;·&nbsp; Spring 2026 &nbsp;·&nbsp; Dr. David Saah &nbsp;·&nbsp; SMU Department of Statistical Science</footer>
+
+<script>
+/* ═══════════════════════════════════════
+   MATH LIBRARY
+═══════════════════════════════════════ */
+
+function normalPDF(x) {
+  return Math.exp(-x * x / 2) / Math.sqrt(2 * Math.PI);
+}
+
+function normalCDF(z) {
+  const t = 1 / (1 + 0.2316419 * Math.abs(z));
+  const d = 0.3989423 * Math.exp(-z * z / 2);
+  const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.7814779 + t * (-1.8212560 + t * 1.3302744))));
+  return z > 0 ? 1 - p : p;
+}
+
+function invNorm(p) {
+  const a = [-3.969683028665376e+01, 2.209460984245205e+02, -2.759285104469687e+02, 1.383577518672690e+02, -3.066479806614716e+01, 2.506628277459239e+00];
+  const b = [-5.447609879822406e+01, 1.615858368580409e+02, -1.556989798598866e+02, 6.680131188771972e+01, -1.328068155288572e+01];
+  const c = [-7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e+00, -2.549732539343734e+00, 4.374664141464968e+00, 2.938163982698783e+00];
+  const d = [7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e+00, 3.754408661907416e+00];
+  const pLow = 0.02425, pHigh = 1 - pLow;
+  let q, r;
+  if (p < pLow) {
+    q = Math.sqrt(-2 * Math.log(p));
+    return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+  } else if (p <= pHigh) {
+    q = p - 0.5; r = q * q;
+    return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q / (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
+  } else {
+    q = Math.sqrt(-2 * Math.log(1 - p));
+    return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+  }
+}
+
+/* Log-gamma: Lanczos approximation */
+function logGamma(z) {
+  const c = [76.18009172947146,-86.50532032941677,24.01409824083091,
+             -1.231739572450155,0.1208650973866179e-2,-0.5395239384953e-5];
+  let x = z, y = z, tmp = x + 5.5;
+  tmp -= (x + 0.5) * Math.log(tmp);
+  let ser = 1.000000000190015;
+  for (let j = 0; j < 6; j++) { y++; ser += c[j] / y; }
+  return -tmp + Math.log(2.5066282746310005 * ser / x);
+}
+
+/* t-distribution PDF */
+function tPDF(x, nu) {
+  const lp = logGamma((nu + 1) / 2) - 0.5 * Math.log(nu * Math.PI) - logGamma(nu / 2);
+  return Math.exp(lp - (nu + 1) / 2 * Math.log(1 + x * x / nu));
+}
+
+/* Regularized incomplete beta via continued fraction (Lentz) */
+function betaCF(x, a, b) {
+  const MAXIT = 200, EPS = 3e-7, FPMIN = 1e-30;
+  const qab = a + b, qap = a + 1, qam = a - 1;
+  let c = 1, d = 1 - qab * x / qap;
+  if (Math.abs(d) < FPMIN) d = FPMIN;
+  d = 1 / d; let h = d;
+  for (let m = 1; m <= MAXIT; m++) {
+    const m2 = 2 * m;
+    let aa = m * (b - m) * x / ((qam + m2) * (a + m2));
+    d = 1 + aa * d; if (Math.abs(d) < FPMIN) d = FPMIN; d = 1 / d;
+    c = 1 + aa / c; if (Math.abs(c) < FPMIN) c = FPMIN; h *= d * c;
+    aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
+    d = 1 + aa * d; if (Math.abs(d) < FPMIN) d = FPMIN; d = 1 / d;
+    c = 1 + aa / c; if (Math.abs(c) < FPMIN) c = FPMIN;
+    const del = d * c; h *= del;
+    if (Math.abs(del - 1) < EPS) break;
+  }
+  return h;
+}
+
+function betaInc(x, a, b) {
+  if (x <= 0) return 0; if (x >= 1) return 1;
+  const lbeta = logGamma(a) + logGamma(b) - logGamma(a + b);
+  const front = Math.exp(Math.log(x) * a + Math.log(1 - x) * b - lbeta);
+  if (x < (a + 1) / (a + b + 2))
+    return front * betaCF(x, a, b) / a;
+  else
+    return 1 - (Math.exp(Math.log(1-x)*b + Math.log(x)*a - lbeta) / b) * betaCF(1 - x, b, a);
+}
+
+/* t-distribution CDF */
+function tCDF(t, nu) {
+  const x = nu / (nu + t * t);
+  const p = 0.5 * betaInc(x, nu / 2, 0.5);
+  return t >= 0 ? 1 - p : p;
+}
+
+/* Inverse t via Newton–Raphson (starts from invNorm as initial guess) */
+function invT(p, nu) {
+  if (p <= 0) return -Infinity;
+  if (p >= 1) return  Infinity;
+  let t = invNorm(p);                  // good starting point even for small df
+  for (let i = 0; i < 40; i++) {
+    const f  = tCDF(t, nu) - p;
+    const fp = tPDF(t, nu);
+    if (fp < 1e-14) break;
+    const dt = f / fp;
+    t -= dt;
+    if (Math.abs(dt) < 1e-9) break;
+  }
+  return t;
+}
+
+/* ═══════════════════════════════════════
+   DISPATCH HELPERS
+═══════════════════════════════════════ */
+
+function getCritical(alpha, testType, dist, nu) {
+  const isZ = (dist !== 't-mean');
+  if (testType === 'upper') return isZ ? invNorm(1 - alpha)    : invT(1 - alpha,    nu);
+  if (testType === 'lower') return isZ ? invNorm(alpha)        : invT(alpha,        nu);
+  /* two-tailed */           return isZ ? invNorm(1 - alpha/2) : invT(1 - alpha/2,  nu);
+}
+
+function getPValue(stat, testType, dist, nu) {
+  const isZ = (dist !== 't-mean');
+  const upper = v => isZ ? 1 - normalCDF(v) : 1 - tCDF(v, nu);
+  const lower = v => isZ ?     normalCDF(v) :     tCDF(v, nu);
+  if (testType === 'upper') return upper(stat);
+  if (testType === 'lower') return lower(stat);
+  return 2 * upper(Math.abs(stat));
+}
+
+function PDF(x, dist, nu) {
+  return dist === 't-mean' ? tPDF(x, nu) : normalPDF(x);
+}
+
+/* ═══════════════════════════════════════
+   STATE
+═══════════════════════════════════════ */
+
+let currentDist = 'z-mean';
+
+/* ═══════════════════════════════════════
+   CANVAS DRAWING
+═══════════════════════════════════════ */
+
+const canvas = document.getElementById('distCanvas');
+const ctx    = canvas.getContext('2d');
+
+function draw() {
+  const W   = canvas.parentElement.clientWidth - 24;
+  const H   = Math.max(290, Math.min(400, window.innerHeight * 0.40));
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.scale(dpr, dpr);
+
+  const testType = document.getElementById('testType').value;
+  const alpha    = parseFloat(document.getElementById('alphaSelect').value);
+  const stat     = parseFloat(document.getElementById('statSlider').value);
+  const nu       = parseInt(document.getElementById('dfSlider').value);
+  const dist     = currentDist;
+
+  const zCrit = getCritical(alpha, testType, dist, nu);
+  const zMin = -5, zMax = 5;
+  const pad = { left: 50, right: 22, top: 34, bottom: 58 };
+  const pW  = W - pad.left - pad.right;
+  const pH  = H - pad.top  - pad.bottom;
+  const maxPDF = PDF(0, dist, nu);
+
+  function xc(v)  { return pad.left + (v - zMin) / (zMax - zMin) * pW; }
+  function yc(y)  { return pad.top  + pH - (y / maxPDF) * pH * 0.84; }
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Subtle grid
+  ctx.strokeStyle = 'rgba(0,0,0,0.04)';
+  ctx.lineWidth = 1;
+  [-4,-3,-2,-1,0,1,2,3,4].forEach(v => {
+    ctx.beginPath(); ctx.moveTo(xc(v), pad.top); ctx.lineTo(xc(v), pad.top + pH); ctx.stroke();
+  });
+
+  // Rejection region fill
+  function fillTail(x1, x2) {
+    ctx.fillStyle = 'rgba(226,75,74,0.20)';
+    ctx.beginPath();
+    ctx.moveTo(xc(x1), pad.top + pH);
+    for (let i = 0; i <= 400; i++) {
+      const xi = x1 + i * (x2 - x1) / 400;
+      ctx.lineTo(xc(xi), yc(PDF(xi, dist, nu)));
+    }
+    ctx.lineTo(xc(x2), pad.top + pH);
+    ctx.closePath(); ctx.fill();
+  }
+
+  if (testType === 'upper') fillTail(zCrit, zMax);
+  else if (testType === 'lower') fillTail(zMin, zCrit);
+  else { fillTail(zCrit, zMax); fillTail(zMin, -zCrit); }
+
+  // Baseline
+  ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(pad.left, pad.top + pH); ctx.lineTo(pad.left + pW, pad.top + pH); ctx.stroke();
+
+  // If t-distribution, draw reference normal curve (dashed, light)
+  if (dist === 't-mean') {
+    ctx.strokeStyle = 'rgba(83,74,183,0.22)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5, 4]);
+    ctx.beginPath();
+    for (let i = 0; i <= 500; i++) {
+      const xi = zMin + i * (zMax - zMin) / 500;
+      // Scale normal to same peak height as current t-dist for visual comparison
+      const yi = (normalPDF(xi) / normalPDF(0)) * maxPDF;
+      if (i === 0) ctx.moveTo(xc(xi), yc(yi));
+      else         ctx.lineTo(xc(xi), yc(yi));
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Main distribution curve
+  const curveColor = dist === 't-mean' ? '#185FA5' : '#534AB7';
+  ctx.strokeStyle = curveColor;
+  ctx.lineWidth = 3;
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  for (let i = 0; i <= 600; i++) {
+    const xi = zMin + i * (zMax - zMin) / 600;
+    if (i === 0) ctx.moveTo(xc(xi), yc(PDF(xi, dist, nu)));
+    else         ctx.lineTo(xc(xi), yc(PDF(xi, dist, nu)));
+  }
+  ctx.stroke();
+
+  // Critical value line(s)
+  const critSymbol = dist === 't-mean' ? 't' : 'z';
+  function drawCritLine(xv, lbl, side) {
+    const xpos = xc(xv);
+    ctx.strokeStyle = '#A32D2D';
+    ctx.lineWidth = 2; ctx.setLineDash([7, 4]);
+    ctx.beginPath(); ctx.moveTo(xpos, pad.top + 6); ctx.lineTo(xpos, pad.top + pH); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#A32D2D';
+    ctx.font = 'bold 12px Courier New, monospace';
+    ctx.textAlign = side === 'r' ? 'left' : 'right';
+    ctx.fillText(lbl, xpos + (side === 'r' ? 7 : -7), pad.top + 21);
+  }
+
+  const cvLabel = (v, suffix) => critSymbol + suffix + ' = ' + v.toFixed(3);
+  if (testType === 'upper')      drawCritLine(zCrit,  cvLabel(zCrit,  '\u03b1'),   'r');
+  else if (testType === 'lower') drawCritLine(zCrit,  cvLabel(zCrit,  '\u03b1'),   'l');
+  else {
+    drawCritLine( zCrit, cvLabel(zCrit,  '\u03b1/2'), 'r');
+    drawCritLine(-zCrit, cvLabel(-zCrit, '\u03b1/2'), 'l');
+  }
+
+  // "RR" labels in shaded tails
+  ctx.fillStyle = 'rgba(163,45,45,0.50)';
+  ctx.font = 'bold 13px Georgia, serif';
+  ctx.textAlign = 'center';
+  if (testType === 'upper')      ctx.fillText('RR', xc((zCrit + zMax) / 2), pad.top + pH - 18);
+  else if (testType === 'lower') ctx.fillText('RR', xc((zMin + zCrit) / 2), pad.top + pH - 18);
+  else {
+    ctx.fillText('RR', xc((zCrit  + zMax) / 2), pad.top + pH - 18);
+    ctx.fillText('RR', xc((zMin + (-zCrit)) / 2), pad.top + pH - 18);
+  }
+
+  // Test statistic line
+  const xpos = xc(stat);
+  ctx.strokeStyle = '#0F6E56';
+  ctx.lineWidth = 3; ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(xpos, pad.top); ctx.lineTo(xpos, pad.top + pH); ctx.stroke();
+
+  // Dot on curve
+  const yCurve = yc(PDF(stat, dist, nu));
+  ctx.fillStyle = '#0F6E56';
+  ctx.beginPath(); ctx.arc(xpos, yCurve, 5.5, 0, 2 * Math.PI); ctx.fill();
+  ctx.strokeStyle = 'white'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(xpos, yCurve, 5.5, 0, 2 * Math.PI); ctx.stroke();
+
+  // Statistic label
+  const sym = dist === 't-mean' ? 't' : 'z';
+  ctx.fillStyle = '#0F6E56';
+  ctx.font = 'bold 13px Courier New, monospace';
+  ctx.textAlign = stat >= 0 ? 'right' : 'left';
+  ctx.fillText(sym + ' = ' + (stat >= 0 ? '+' : '') + stat.toFixed(2),
+               xpos + (stat >= 0 ? -8 : 8), pad.top + pH - 10);
+
+  // x-axis numbers
+  ctx.fillStyle = '#5F5E5A';
+  ctx.font = '12px Georgia, serif';
+  ctx.textAlign = 'center';
+  [-4, -3, -2, -1, 0, 1, 2, 3, 4].forEach(v => {
+    ctx.fillText(v, xc(v), pad.top + pH + 20);
+  });
+
+  // Axis label
+  ctx.fillStyle = '#888780';
+  ctx.font = '11px Georgia, serif';
+  ctx.textAlign = 'center';
+  const axisLabel = dist === 't-mean'
+    ? 't\u2099\u208B\u2081  (t-distribution, \u03bd = ' + nu + ')'
+    : 'Z  (standard normal)';
+  ctx.fillText(axisLabel, pad.left + pW / 2, pad.top + pH + 38);
+
+  // y-axis label
+  ctx.save();
+  ctx.fillStyle = '#888780'; ctx.font = '11px Georgia, serif'; ctx.textAlign = 'center';
+  ctx.translate(14, pad.top + pH / 2); ctx.rotate(-Math.PI / 2);
+  ctx.fillText('density', 0, 0);
+  ctx.restore();
+
+  // Legend
+  const ly = H - 10, lx = pad.left;
+  ctx.fillStyle = 'rgba(226,75,74,0.28)'; ctx.strokeStyle = '#A32D2D'; ctx.lineWidth = 1.5;
+  ctx.fillRect(lx, ly - 11, 16, 12); ctx.strokeRect(lx, ly - 11, 16, 12);
+  ctx.fillStyle = '#444'; ctx.font = '11px Georgia, serif'; ctx.textAlign = 'left';
+  ctx.fillText('Rejection region', lx + 21, ly);
+
+  ctx.strokeStyle = '#0F6E56'; ctx.lineWidth = 3; ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(lx + 182, ly - 6); ctx.lineTo(lx + 200, ly - 6); ctx.stroke();
+  ctx.fillText('Test statistic', lx + 205, ly);
+
+  ctx.strokeStyle = '#A32D2D'; ctx.lineWidth = 2; ctx.setLineDash([5, 3]);
+  ctx.beginPath(); ctx.moveTo(lx + 346, ly - 6); ctx.lineTo(lx + 364, ly - 6); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillText('Critical value', lx + 369, ly);
+
+  if (dist === 't-mean') {
+    ctx.strokeStyle = 'rgba(83,74,183,0.35)'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 3]);
+    ctx.beginPath(); ctx.moveTo(lx + 494, ly - 6); ctx.lineTo(lx + 512, ly - 6); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillText('N(0,1) reference', lx + 517, ly);
+  }
+}
+
+/* ═══════════════════════════════════════
+   PANEL UPDATES
+═══════════════════════════════════════ */
+
+const INFO = {
+  'z-mean': {
+    use:     'n > 40 (large sample). \u03c3 is unknown \u2014 S is used in its place. Population need not be normal (CLT applies). See Devore \u00a78.2.',
+    stat:    'Population mean \u03bc. S (sample std dev) substitutes for \u03c3. Approximate N(0,1) by CLT.',
+    formula: 'Z = (X\u0305 \u2212 \u03bc\u2080) / (S / \u221an)  \u2248  N(0, 1)'
+  },
+  't-mean': {
+    use:     'n \u2264 40, \u03c3 unknown, population approximately normal. See Devore \u00a78.3.',
+    stat:    'Population mean \u03bc, \u03c3 unknown. Degrees of freedom \u03bd = n \u2212 1.',
+    formula: 'T = (X\u0305 \u2212 \u03bc\u2080) / (S / \u221an)  ~  t\u2099\u208B\u2081'
+  },
+  'z-prop': {
+    use:     'Large sample proportion test. Requires np\u2080 \u2265 10 and n(1\u2212p\u2080) \u2265 10. See Devore \u00a78.4.',
+    stat:    'Population proportion p. Standard deviation known under H\u2080.',
+    formula: 'Z = (p\u0302 \u2212 p\u2080) / \u221a[p\u2080(1\u2212p\u2080)/n]  ~  N(0, 1)'
+  }
+};
+
+function updateInfo() {
+  const d = INFO[currentDist];
+  document.getElementById('infoUseText').textContent  = d.use;
+  document.getElementById('infoStatText').textContent = d.stat;
+  document.getElementById('infoFormula').textContent  = d.formula;
+  document.getElementById('statSymbol').textContent   = currentDist === 't-mean' ? 't' : 'z';
+  document.getElementById('dfRow').style.display      = currentDist === 't-mean' ? '' : 'none';
+}
+
+function updatePanels() {
+  const testType = document.getElementById('testType').value;
+  const alpha    = parseFloat(document.getElementById('alphaSelect').value);
+  const stat     = parseFloat(document.getElementById('statSlider').value);
+  const nu       = parseInt(document.getElementById('dfSlider').value);
+  const dist     = currentDist;
+  const sym      = dist === 't-mean' ? 't' : 'z';
+
+  // df note
+  if (dist === 't-mean') {
+    document.getElementById('dfLabel').textContent = nu;
+    const dfNote = document.getElementById('dfNote');
+    if (nu >= 30) dfNote.textContent = '\u03bd \u2265 30: t-distribution \u2248 N(0,1)';
+    else if (nu >= 10) dfNote.textContent = 'Moderate df: heavier tails than N(0,1)';
+    else dfNote.textContent = 'Small df: noticeably heavier tails';
+  }
+
+  // Stat slider label
+  document.getElementById('statLabel').textContent =
+    (stat >= 0 ? '+' : '') + stat.toFixed(2);
+
+  const zCrit = getCritical(alpha, testType, dist, nu);
+  const pval  = getPValue(stat, testType, dist, nu);
+  const reject = pval < alpha;
+
+  // p-value panel
+  document.getElementById('pvalDisplay').textContent = 'p-value = ' + pval.toFixed(4);
+  document.getElementById('pvalLogic').innerHTML = reject
+    ? 'p-value &lt; &alpha; = ' + alpha + '<br><strong>&rarr; Reject H&#8320;</strong>'
+    : 'p-value &ge; &alpha; = ' + alpha + '<br><strong>&rarr; Fail to reject H&#8320;</strong>';
+
+  // RR panel
+  let rrVal, rrLogic, rrFormula;
+  const nuStr = dist === 't-mean' ? ',\u03bd' : '';
+
+  if (testType === 'upper') {
+    rrVal    = sym + ' = ' + (stat>=0?'+':'') + stat.toFixed(2) + '  vs  ' + sym + '\u03b1' + nuStr + ' = ' + zCrit.toFixed(3);
+    rrLogic  = reject
+      ? sym + ' &gt; ' + sym + '<sub>&alpha;' + (dist==='t-mean'?',&nu;':'') + '</sub> &nbsp;&rArr;&nbsp; in RR<br><strong>&rarr; Reject H&#8320;</strong>'
+      : sym + ' &le; ' + sym + '<sub>&alpha;' + (dist==='t-mean'?',&nu;':'') + '</sub> &nbsp;&rArr;&nbsp; not in RR<br><strong>&rarr; Fail to reject H&#8320;</strong>';
+    rrFormula = 'RR = { ' + sym + ' : ' + sym + ' > ' + sym + '<sub>&alpha;' + (dist==='t-mean'?',&nu;':'') + '</sub> }  =  { ' + sym + ' : ' + sym + ' > ' + zCrit.toFixed(3) + ' }';
+  } else if (testType === 'lower') {
+    rrVal    = sym + ' = ' + (stat>=0?'+':'') + stat.toFixed(2) + '  vs  &minus;' + sym + '\u03b1' + nuStr + ' = ' + zCrit.toFixed(3);
+    rrLogic  = reject
+      ? sym + ' &lt; &minus;' + sym + '<sub>&alpha;' + (dist==='t-mean'?',&nu;':'') + '</sub> &nbsp;&rArr;&nbsp; in RR<br><strong>&rarr; Reject H&#8320;</strong>'
+      : sym + ' &ge; &minus;' + sym + '<sub>&alpha;' + (dist==='t-mean'?',&nu;':'') + '</sub> &nbsp;&rArr;&nbsp; not in RR<br><strong>&rarr; Fail to reject H&#8320;</strong>';
+    rrFormula = 'RR = { ' + sym + ' : ' + sym + ' < &minus;' + sym + '<sub>&alpha;' + (dist==='t-mean'?',&nu;':'') + '</sub> }  =  { ' + sym + ' : ' + sym + ' < ' + zCrit.toFixed(3) + ' }';
+  } else {
+    rrVal    = '|' + sym + '| = ' + Math.abs(stat).toFixed(2) + '  vs  ' + sym + '\u03b1/2' + nuStr + ' = ' + zCrit.toFixed(3);
+    rrLogic  = reject
+      ? '|' + sym + '| &gt; ' + sym + '<sub>&alpha;/2' + (dist==='t-mean'?',&nu;':'') + '</sub> &nbsp;&rArr;&nbsp; in RR<br><strong>&rarr; Reject H&#8320;</strong>'
+      : '|' + sym + '| &le; ' + sym + '<sub>&alpha;/2' + (dist==='t-mean'?',&nu;':'') + '</sub> &nbsp;&rArr;&nbsp; not in RR<br><strong>&rarr; Fail to reject H&#8320;</strong>';
+    rrFormula = 'RR = { ' + sym + ' : |' + sym + '| > ' + sym + '<sub>&alpha;/2' + (dist==='t-mean'?',&nu;':'') + '</sub> }  =  { ' + sym + ' : ' + sym + ' > ' + zCrit.toFixed(3) + ' or ' + sym + ' < ' + (-zCrit).toFixed(3) + ' }';
+  }
+
+  document.getElementById('rrDisplay').textContent  = rrVal;
+  document.getElementById('rrLogic').innerHTML       = rrLogic;
+  document.getElementById('rrFormulaBox').innerHTML  = rrFormula;
+
+  const conc = document.getElementById('conclusion');
+  if (reject) {
+    conc.className   = 'c-reject';
+    conc.innerHTML   = '&#10003; Both methods agree &mdash; Reject H&#8320; at &alpha; = ' + alpha;
+  } else {
+    conc.className   = 'c-ftr';
+    conc.innerHTML   = 'Both methods agree &mdash; Fail to reject H&#8320; at &alpha; = ' + alpha;
+  }
+}
+
+function update() { draw(); updatePanels(); }
+
+/* ═══════════════════════════════════════
+   EVENT LISTENERS
+═══════════════════════════════════════ */
+
+document.querySelectorAll('.dist-tab').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.dist-tab').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    currentDist = this.dataset.dist;
+    updateInfo();
+    update();
+  });
+});
+
+document.getElementById('testType').addEventListener('change', update);
+document.getElementById('alphaSelect').addEventListener('change', update);
+document.getElementById('statSlider').addEventListener('input', update);
+document.getElementById('dfSlider').addEventListener('input', update);
+window.addEventListener('resize', update);
+
+// Init
+updateInfo();
+update();
+</script>
+</body>
+</html>

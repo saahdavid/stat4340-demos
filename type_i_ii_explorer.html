@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Type I &amp; II Errors — STAT 4340</title>
+<style>
+  :root {
+    --purple:#534AB7; --purple-bg:#EEEDFE; --purple-mid:#7F77DD;
+    --teal:#0F6E56; --teal-bg:#E1F5EE; --teal-mid:#1D9E75;
+    --red:#A32D2D; --red-bg:#FCEBEB; --red-mid:#E24B4A;
+    --amber:#854F0B; --amber-bg:#FAEEDA; --amber-mid:#BA7517;
+    --gray-light:#F1EFE8; --text:#2C2C2A; --text-muted:#888780;
+    --border:rgba(0,0,0,0.10); --bg:#F8F7F4; --card:#FFFFFF;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:Georgia,serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{background:var(--purple);color:white;padding:1rem 2.5rem;display:flex;align-items:baseline;gap:1.5rem;flex-wrap:wrap;}
+  header h1{font-size:1.2rem;font-weight:normal;}
+  header span{font-size:0.8rem;opacity:0.65;font-family:'Courier New',monospace;}
+  .main{max-width:1000px;margin:0 auto;padding:1.75rem 2rem 2rem;}
+
+  .legend-bar{display:flex;gap:1.5rem;flex-wrap:wrap;align-items:center;background:var(--card);border:1.5px solid var(--border);border-radius:8px;padding:0.7rem 1.1rem;margin-bottom:1.4rem;font-size:0.85rem;}
+  .leg{display:flex;align-items:center;gap:7px;}
+  .leg-swatch{width:18px;height:14px;border-radius:3px;}
+
+  .controls-row{display:grid;grid-template-columns:1.4fr 1fr 1.6fr 1.6fr;gap:1.1rem;margin-bottom:1.4rem;}
+  @media(max-width:680px){.controls-row{grid-template-columns:1fr 1fr;}}
+  .cg label{display:block;font-size:0.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);font-family:'Courier New',monospace;margin-bottom:6px;}
+  .cg label .val{color:var(--text);font-size:0.95rem;font-weight:bold;}
+  select{width:100%;padding:8px 28px 8px 10px;border:1.5px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);font-family:Georgia,serif;font-size:0.92rem;cursor:pointer;outline:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;}
+  select:focus{border-color:var(--purple);}
+  input[type=range]{-webkit-appearance:none;width:100%;height:5px;border-radius:3px;outline:none;background:#D3D1C7;margin-top:4px;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--purple);cursor:pointer;box-shadow:0 1px 5px rgba(83,74,183,.4);}
+  input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--purple);cursor:pointer;border:none;}
+
+  .canvas-grid{display:grid;grid-template-columns:1.7fr 1fr;gap:1.1rem;margin-bottom:1.1rem;}
+  @media(max-width:680px){.canvas-grid{grid-template-columns:1fr;}}
+  .canvas-wrap{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:.7rem .7rem .25rem;box-shadow:0 2px 12px rgba(0,0,0,.04);}
+  .canvas-wrap .cap{font-size:0.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);font-family:'Courier New',monospace;margin-bottom:4px;padding:0 4px;}
+  canvas{width:100%;display:block;}
+
+  .stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1rem;}
+  @media(max-width:520px){.stats-row{grid-template-columns:1fr;}}
+  .stat-card{border-radius:10px;padding:0.9rem 1.1rem;border:1.5px solid;}
+  .stat-card .sc-label{font-size:0.68rem;text-transform:uppercase;letter-spacing:.08em;font-family:'Courier New',monospace;margin-bottom:4px;}
+  .stat-card .sc-val{font-size:1.5rem;font-weight:bold;font-family:'Courier New',monospace;margin-bottom:3px;}
+  .stat-card .sc-desc{font-size:0.8rem;line-height:1.5;}
+  .card-alpha{background:var(--red-bg);border-color:rgba(163,45,45,.25);color:var(--red);}
+  .card-beta {background:var(--amber-bg);border-color:rgba(133,79,11,.25);color:var(--amber);}
+  .card-power{background:var(--teal-bg);border-color:rgba(15,110,86,.25);color:var(--teal);}
+
+  footer{text-align:center;padding:1.25rem;font-size:.75rem;color:var(--text-muted);font-family:'Courier New',monospace;border-top:1px solid var(--border);margin-top:2rem;}
+</style>
+</head>
+<body>
+<header>
+  <h1>Type I &amp; II Errors — Power Analysis</h1>
+  <span>STAT 4340 / CS 4340 / OREM 3340 &nbsp;·&nbsp; SMU &nbsp;·&nbsp; Spring 2026</span>
+</header>
+<div class="main">
+
+  <div class="legend-bar">
+    <div class="leg"><div class="leg-swatch" style="background:rgba(226,75,74,.35);border:1px solid #A32D2D;"></div><strong>&alpha;</strong> &nbsp;Type I error — reject true H&#8320;</div>
+    <div class="leg"><div class="leg-swatch" style="background:rgba(186,117,23,.30);border:1px solid #BA7517;"></div><strong>&beta;</strong> &nbsp;Type II error — fail to reject false H&#8320;</div>
+    <div class="leg"><div class="leg-swatch" style="background:rgba(29,158,117,.30);border:1px solid #0F6E56;"></div><strong>Power = 1 &minus; &beta;</strong> &nbsp;correctly reject false H&#8320;</div>
+  </div>
+
+  <div class="controls-row">
+    <div class="cg">
+      <label>Alternative hypothesis H<sub>a</sub></label>
+      <select id="testType">
+        <option value="upper">H&#8336;: &mu; &gt; &mu;&#8320; &nbsp;(upper-tailed)</option>
+        <option value="lower">H&#8336;: &mu; &lt; &mu;&#8320; &nbsp;(lower-tailed)</option>
+        <option value="two">H&#8336;: &mu; &ne; &mu;&#8320; &nbsp;(two-tailed)</option>
+      </select>
+    </div>
+    <div class="cg">
+      <label>Significance level &alpha;</label>
+      <select id="alphaSelect">
+        <option value="0.10">&alpha; = 0.10</option>
+        <option value="0.05" selected>&alpha; = 0.05</option>
+        <option value="0.01">&alpha; = 0.01</option>
+      </select>
+    </div>
+    <div class="cg">
+      <label>True effect &nbsp;d = (&mu;&prime; &minus; &mu;&#8320;) / &sigma; = <span class="val" id="dLabel">0.50</span></label>
+      <input type="range" id="dSlider" min="-2.5" max="2.5" step="0.05" value="0.5">
+    </div>
+    <div class="cg">
+      <label>Sample size &nbsp;n = <span class="val" id="nLabel">20</span> &nbsp;&nbsp; &delta; = d&radic;n = <span class="val" id="deltaLabel">2.24</span></label>
+      <input type="range" id="nSlider" min="2" max="100" step="1" value="20">
+    </div>
+  </div>
+
+  <div class="canvas-grid">
+    <div class="canvas-wrap">
+      <div class="cap">Distribution of test statistic under H&#8320; and under true &mu;&prime;</div>
+      <canvas id="distCanvas"></canvas>
+    </div>
+    <div class="canvas-wrap">
+      <div class="cap">Power curve vs effect size &delta;</div>
+      <canvas id="powerCanvas"></canvas>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card card-alpha">
+      <div class="sc-label">&alpha; — Type I error rate</div>
+      <div class="sc-val" id="alphaVal"></div>
+      <div class="sc-desc">Probability of rejecting H&#8320; when H&#8320; is actually true. Set by the researcher via significance level.</div>
+    </div>
+    <div class="stat-card card-beta">
+      <div class="sc-label">&beta; — Type II error rate</div>
+      <div class="sc-val" id="betaVal"></div>
+      <div class="sc-desc">Probability of failing to reject H&#8320; when it is false. Decreases as n &uarr; or effect size &uarr;.</div>
+    </div>
+    <div class="stat-card card-power">
+      <div class="sc-label">Power = 1 &minus; &beta;</div>
+      <div class="sc-val" id="powerVal"></div>
+      <div class="sc-desc">Probability of correctly detecting a false H&#8320;. Conventional target: <strong>0.80</strong> or <strong>0.90</strong>.</div>
+    </div>
+  </div>
+
+</div>
+<footer>STAT 4340 &nbsp;·&nbsp; Spring 2026 &nbsp;·&nbsp; Dr. David Saah &nbsp;·&nbsp; SMU</footer>
+
+<script>
+function normalPDF(x){return Math.exp(-x*x/2)/Math.sqrt(2*Math.PI);}
+function normalCDF(z){const t=1/(1+0.2316419*Math.abs(z)),d=0.3989423*Math.exp(-z*z/2),p=d*t*(0.3193815+t*(-0.3565638+t*(1.7814779+t*(-1.8212560+t*1.3302744))));return z>0?1-p:p;}
+function invNorm(p){
+  const a=[-3.969683028665376e+01,2.209460984245205e+02,-2.759285104469687e+02,1.383577518672690e+02,-3.066479806614716e+01,2.506628277459239e+00];
+  const b=[-5.447609879822406e+01,1.615858368580409e+02,-1.556989798598866e+02,6.680131188771972e+01,-1.328068155288572e+01];
+  const c=[-7.784894002430293e-03,-3.223964580411365e-01,-2.400758277161838e+00,-2.549732539343734e+00,4.374664141464968e+00,2.938163982698783e+00];
+  const d=[7.784695709041462e-03,3.224671290700398e-01,2.445134137142996e+00,3.754408661907416e+00];
+  const pLow=0.02425,pHigh=1-pLow;let q,r;
+  if(p<pLow){q=Math.sqrt(-2*Math.log(p));return(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
+  else if(p<=pHigh){q=p-0.5;r=q*q;return(((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);}
+  else{q=Math.sqrt(-2*Math.log(1-p));return-(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
+}
+
+function getStats(testType,alpha,delta){
+  const za=invNorm(1-alpha),za2=invNorm(1-alpha/2);
+  if(testType==='upper'){const pw=1-normalCDF(za-delta);return{crit:za,crit2:null,beta:1-pw,power:pw};}
+  if(testType==='lower'){const crit=-za,pw=normalCDF(crit-delta);return{crit,crit2:null,beta:1-pw,power:pw};}
+  const pw=(1-normalCDF(za2-delta))+normalCDF(-za2-delta);return{crit:za2,crit2:-za2,beta:1-pw,power:pw};
+}
+
+function getPowerAt(testType,alpha,delta){
+  const s=getStats(testType,alpha,delta);return s.power;
+}
+
+/* ── Distribution canvas ── */
+const distC=document.getElementById('distCanvas'),dCtx=distC.getContext('2d');
+
+function drawDist(){
+  const W=distC.parentElement.clientWidth-22,H=240,dpr=window.devicePixelRatio||1;
+  distC.width=W*dpr;distC.height=H*dpr;distC.style.width=W+'px';distC.style.height=H+'px';dCtx.scale(dpr,dpr);
+
+  const testType=document.getElementById('testType').value;
+  const alpha=parseFloat(document.getElementById('alphaSelect').value);
+  const d=parseFloat(document.getElementById('dSlider').value);
+  const n=parseInt(document.getElementById('nSlider').value);
+  const delta=d*Math.sqrt(n);
+  const {crit,crit2}=getStats(testType,alpha,delta);
+
+  const zMin=Math.min(-4,delta-4),zMax=Math.max(4,delta+4);
+  const pad={left:36,right:16,top:20,bottom:40};
+  const pW=W-pad.left-pad.right,pH=H-pad.top-pad.bottom;
+  const maxY=normalPDF(0);
+  function xc(v){return pad.left+(v-zMin)/(zMax-zMin)*pW;}
+  function yc(y){return pad.top+pH-(y/maxY)*pH*0.83;}
+
+  dCtx.clearRect(0,0,W,H);
+
+  // Shade regions
+  function fillRegion(from,to,pdFn,col){
+    dCtx.fillStyle=col;dCtx.beginPath();
+    dCtx.moveTo(xc(from),pad.top+pH);
+    const steps=300;
+    for(let i=0;i<=steps;i++){const xi=from+i*(to-from)/steps;dCtx.lineTo(xc(xi),yc(pdFn(xi)));}
+    dCtx.lineTo(xc(to),pad.top+pH);dCtx.closePath();dCtx.fill();
+  }
+
+  const h0PDF=x=>normalPDF(x);
+  const trPDF=x=>normalPDF(x-delta);
+
+  // α region (under H₀, in rejection region)
+  const alphaFill='rgba(226,75,74,0.32)';
+  const betaFill ='rgba(186,117,23,0.30)';
+  const powerFill='rgba(29,158,117,0.28)';
+
+  if(testType==='upper'){
+    fillRegion(crit,zMax,trPDF,powerFill);  // power
+    fillRegion(zMin,crit,trPDF,betaFill);   // beta
+    fillRegion(crit,zMax,h0PDF,alphaFill);  // alpha
+  } else if(testType==='lower'){
+    fillRegion(zMin,crit,trPDF,powerFill);
+    fillRegion(crit,zMax,trPDF,betaFill);
+    fillRegion(zMin,crit,h0PDF,alphaFill);
+  } else {
+    fillRegion(crit,zMax,trPDF,powerFill);
+    fillRegion(zMin,crit2,trPDF,powerFill);
+    fillRegion(crit2,crit,trPDF,betaFill);
+    fillRegion(crit,zMax,h0PDF,alphaFill);
+    fillRegion(zMin,crit2,h0PDF,alphaFill);
+  }
+
+  // Baseline
+  dCtx.strokeStyle='rgba(0,0,0,0.15)';dCtx.lineWidth=1.5;
+  dCtx.beginPath();dCtx.moveTo(pad.left,pad.top+pH);dCtx.lineTo(pad.left+pW,pad.top+pH);dCtx.stroke();
+
+  // True distribution curve (blue, drawn first = behind)
+  dCtx.strokeStyle='#185FA5';dCtx.lineWidth=2.5;
+  dCtx.beginPath();
+  for(let i=0;i<=500;i++){const xi=zMin+i*(zMax-zMin)/500;if(i===0)dCtx.moveTo(xc(xi),yc(trPDF(xi)));else dCtx.lineTo(xc(xi),yc(trPDF(xi)));}
+  dCtx.stroke();
+
+  // H₀ distribution curve (purple, drawn on top)
+  dCtx.strokeStyle=delta===0?'#888':'#534AB7';dCtx.lineWidth=2.5;
+  dCtx.beginPath();
+  for(let i=0;i<=500;i++){const xi=zMin+i*(zMax-zMin)/500;if(i===0)dCtx.moveTo(xc(xi),yc(h0PDF(xi)));else dCtx.lineTo(xc(xi),yc(h0PDF(xi)));}
+  dCtx.stroke();
+
+  // Critical value line(s)
+  function critLine(v){
+    dCtx.strokeStyle='#A32D2D';dCtx.lineWidth=2;dCtx.setLineDash([6,4]);
+    dCtx.beginPath();dCtx.moveTo(xc(v),pad.top+4);dCtx.lineTo(xc(v),pad.top+pH);dCtx.stroke();
+    dCtx.setLineDash([]);
+  }
+  critLine(crit);if(crit2!==null)critLine(crit2);
+
+  // μ₀ and μ' markers at baseline
+  function markMean(v,col,lbl){
+    dCtx.fillStyle=col;dCtx.beginPath();dCtx.arc(xc(v),pad.top+pH,5,0,2*Math.PI);dCtx.fill();
+    dCtx.fillStyle=col;dCtx.font='bold 11px Courier New,monospace';dCtx.textAlign='center';
+    dCtx.fillText(lbl,xc(v),pad.top+pH+15);
+  }
+  markMean(0,'#534AB7','\u03bc\u2080');
+  if(delta!==0)markMean(delta,'#185FA5',"\u03bc'");
+
+  // x-axis ticks
+  dCtx.fillStyle='#888780';dCtx.font='11px Georgia,serif';dCtx.textAlign='center';
+  for(let v=Math.ceil(zMin);v<=Math.floor(zMax);v+=1){
+    if(Math.abs(v)<=6)dCtx.fillText(v,xc(v),pad.top+pH+28);
+  }
+
+  // Axis label
+  dCtx.fillStyle='#888780';dCtx.font='11px Georgia,serif';dCtx.textAlign='center';
+  dCtx.fillText('Test statistic  Z  (standardized)',pad.left+pW/2,pad.top+pH+40);
+
+  // Curve labels
+  dCtx.font='bold 11px Georgia,serif';
+  dCtx.fillStyle='#534AB7';dCtx.textAlign='left';
+  dCtx.fillText('H\u2080: N(0,1)',xc(0)+6,pad.top+16);
+  if(delta!==0){dCtx.fillStyle='#185FA5';dCtx.fillText('True: N(\u03b4,1)',xc(delta)+6,pad.top+28);}
+}
+
+/* ── Power curve canvas ── */
+const pwrC=document.getElementById('powerCanvas'),pCtx=pwrC.getContext('2d');
+
+function drawPower(){
+  const W=pwrC.parentElement.clientWidth-22,H=240,dpr=window.devicePixelRatio||1;
+  pwrC.width=W*dpr;pwrC.height=H*dpr;pwrC.style.width=W+'px';pwrC.style.height=H+'px';pCtx.scale(dpr,dpr);
+
+  const testType=document.getElementById('testType').value;
+  const alpha=parseFloat(document.getElementById('alphaSelect').value);
+  const d=parseFloat(document.getElementById('dSlider').value);
+  const n=parseInt(document.getElementById('nSlider').value);
+  const delta=d*Math.sqrt(n);
+
+  const pad={left:40,right:16,top:20,bottom:40};
+  const pW=W-pad.left-pad.right,pH=H-pad.top-pad.bottom;
+
+  const dMin=-4.5,dMax=4.5;
+  function xc(v){return pad.left+(v-dMin)/(dMax-dMin)*pW;}
+  function yc(p){return pad.top+pH*(1-p);}
+
+  pCtx.clearRect(0,0,W,H);
+
+  // Grid
+  pCtx.strokeStyle='rgba(0,0,0,0.06)';pCtx.lineWidth=1;
+  [0.2,0.4,0.6,0.8,1.0].forEach(p=>{pCtx.beginPath();pCtx.moveTo(pad.left,yc(p));pCtx.lineTo(pad.left+pW,yc(p));pCtx.stroke();});
+
+  // Conventional power targets
+  pCtx.strokeStyle='rgba(133,79,11,0.40)';pCtx.lineWidth=1.5;pCtx.setLineDash([4,3]);
+  [0.80,0.90].forEach(p=>{pCtx.beginPath();pCtx.moveTo(pad.left,yc(p));pCtx.lineTo(pad.left+pW,yc(p));pCtx.stroke();pCtx.fillStyle='rgba(133,79,11,0.7)';pCtx.font='10px Courier New,monospace';pCtx.textAlign='left';pCtx.fillText(p.toFixed(2),pad.left+3,yc(p)-3);});
+  pCtx.setLineDash([]);
+
+  // α line
+  pCtx.strokeStyle='rgba(163,45,45,0.35)';pCtx.lineWidth=1;pCtx.setLineDash([3,3]);
+  pCtx.beginPath();pCtx.moveTo(pad.left,yc(alpha));pCtx.lineTo(pad.left+pW,yc(alpha));pCtx.stroke();
+  pCtx.setLineDash([]);
+
+  // δ=0 vertical
+  pCtx.strokeStyle='rgba(0,0,0,0.10)';pCtx.lineWidth=1;
+  pCtx.beginPath();pCtx.moveTo(xc(0),pad.top);pCtx.lineTo(xc(0),pad.top+pH);pCtx.stroke();
+
+  // Power curve
+  pCtx.strokeStyle='#534AB7';pCtx.lineWidth=2.5;
+  pCtx.beginPath();
+  for(let i=0;i<=400;i++){
+    const dv=dMin+i*(dMax-dMin)/400;
+    const pw=getPowerAt(testType,alpha,dv);
+    if(i===0)pCtx.moveTo(xc(dv),yc(pw));else pCtx.lineTo(xc(dv),yc(pw));
+  }
+  pCtx.stroke();
+
+  // Current operating point
+  const curPow=getPowerAt(testType,alpha,delta);
+  pCtx.fillStyle='#0F6E56';pCtx.beginPath();pCtx.arc(xc(delta),yc(curPow),6,0,2*Math.PI);pCtx.fill();
+  pCtx.strokeStyle='white';pCtx.lineWidth=1.5;pCtx.beginPath();pCtx.arc(xc(delta),yc(curPow),6,0,2*Math.PI);pCtx.stroke();
+
+  // Axes
+  pCtx.strokeStyle='rgba(0,0,0,0.15)';pCtx.lineWidth=1.5;
+  pCtx.beginPath();pCtx.moveTo(pad.left,pad.top);pCtx.lineTo(pad.left,pad.top+pH);pCtx.lineTo(pad.left+pW,pad.top+pH);pCtx.stroke();
+
+  // Axis labels
+  pCtx.fillStyle='#888780';pCtx.font='11px Georgia,serif';
+  pCtx.textAlign='center';
+  [-4,-3,-2,-1,0,1,2,3,4].forEach(v=>{pCtx.fillText(v,xc(v),pad.top+pH+16);});
+  pCtx.fillText('\u03b4 = d\u221an  (non-centrality)',pad.left+pW/2,pad.top+pH+30);
+
+  pCtx.textAlign='right';
+  [0,0.5,1.0].forEach(p=>{pCtx.fillText(p.toFixed(1),pad.left-5,yc(p)+4);});
+  pCtx.save();pCtx.translate(13,pad.top+pH/2);pCtx.rotate(-Math.PI/2);pCtx.textAlign='center';pCtx.fillText('Power',0,0);pCtx.restore();
+}
+
+/* ── Panels ── */
+function updatePanels(){
+  const testType=document.getElementById('testType').value;
+  const alpha=parseFloat(document.getElementById('alphaSelect').value);
+  const d=parseFloat(document.getElementById('dSlider').value);
+  const n=parseInt(document.getElementById('nSlider').value);
+  const delta=d*Math.sqrt(n);
+  const {beta,power}=getStats(testType,alpha,delta);
+
+  document.getElementById('dLabel').textContent=d.toFixed(2);
+  document.getElementById('nLabel').textContent=n;
+  document.getElementById('deltaLabel').textContent=delta.toFixed(2);
+  document.getElementById('alphaVal').textContent=alpha.toFixed(2);
+  document.getElementById('betaVal').textContent=beta.toFixed(4);
+  document.getElementById('powerVal').textContent=power.toFixed(4);
+}
+
+function update(){drawDist();drawPower();updatePanels();}
+['testType','alphaSelect','dSlider','nSlider'].forEach(id=>document.getElementById(id).addEventListener('change',update));
+['dSlider','nSlider'].forEach(id=>document.getElementById(id).addEventListener('input',update));
+window.addEventListener('resize',update);
+update();
+</script>
+</body>
+</html>

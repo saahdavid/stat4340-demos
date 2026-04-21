@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STAT 4340 — Interactive Demos</title>
+<style>
+  :root{
+    --purple:#534AB7;--purple-bg:#EEEDFE;--purple-mid:#7F77DD;
+    --teal:#0F6E56;--teal-bg:#E1F5EE;
+    --blue:#185FA5;--blue-bg:#E6F1FB;
+    --red:#A32D2D;--red-bg:#FCEBEB;
+    --amber:#854F0B;--amber-bg:#FAEEDA;
+    --text:#2C2C2A;--text-muted:#888780;
+    --border:rgba(0,0,0,0.10);--bg:#F8F7F4;--card:#FFFFFF;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:Georgia,serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{background:var(--purple);color:white;padding:1.5rem 2.5rem;}
+  header h1{font-size:1.5rem;font-weight:normal;margin-bottom:.3rem;}
+  header p{font-size:.88rem;opacity:.7;font-family:'Courier New',monospace;}
+
+  .main{max-width:900px;margin:0 auto;padding:2rem 2rem 3rem;}
+  .section-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);font-family:'Courier New',monospace;margin-bottom:1rem;padding-bottom:.4rem;border-bottom:1px solid var(--border);}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.1rem;margin-bottom:2.5rem;}
+  .demo-card{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:1.4rem 1.5rem;text-decoration:none;color:var(--text);transition:box-shadow .15s,transform .15s,border-color .15s;display:block;}
+  .demo-card:hover{box-shadow:0 4px 20px rgba(83,74,183,.12);transform:translateY(-2px);border-color:var(--accent,var(--purple));}
+  .demo-card .dc-icon{font-size:1.7rem;margin-bottom:.7rem;}
+  .demo-card .dc-tag{font-size:.66rem;text-transform:uppercase;letter-spacing:.09em;font-family:'Courier New',monospace;padding:3px 10px;border-radius:20px;display:inline-block;margin-bottom:.65rem;font-weight:bold;}
+  .demo-card h2{font-size:1.05rem;font-weight:normal;margin-bottom:.45rem;line-height:1.4;}
+  .demo-card p{font-size:.85rem;color:var(--text-muted);line-height:1.55;}
+  .demo-card .dc-ref{font-size:.75rem;font-family:'Courier New',monospace;color:var(--text-muted);margin-top:.75rem;opacity:.75;}
+
+  .tag-rr  {background:var(--teal-bg);  color:var(--teal);}
+  .tag-err {background:var(--red-bg);   color:var(--red);}
+  .tag-ci  {background:var(--blue-bg);  color:var(--blue);}
+  .tag-sel {background:var(--purple-bg);color:var(--purple);}
+
+  .c-rr  {--accent:var(--teal);}
+  .c-err {--accent:var(--red);}
+  .c-ci  {--accent:var(--blue);}
+  .c-sel {--accent:var(--purple);}
+
+  footer{text-align:center;padding:1.5rem;font-size:.75rem;color:var(--text-muted);font-family:'Courier New',monospace;border-top:1px solid var(--border);}
+</style>
+</head>
+<body>
+<header>
+  <h1>STAT 4340 — Interactive Classroom Demos</h1>
+  <p>Statistical Methods for Engineers &amp; Applied Scientists &nbsp;·&nbsp; SMU &nbsp;·&nbsp; Spring 2026 &nbsp;·&nbsp; Dr. David Saah</p>
+</header>
+<div class="main">
+
+  <div class="section-label">Chapter 8 — Hypothesis Testing</div>
+  <div class="grid">
+
+    <a href="rejection_region_demo_v3.html" class="demo-card c-rr">
+      <div class="dc-icon">&#x1F4CA;</div>
+      <span class="dc-tag tag-rr">Rejection Region</span>
+      <h2>Rejection Region &amp; p-value</h2>
+      <p>Visualize how the rejection region and p-value method always reach the same decision. Covers Z-test, t-test, and proportion test.</p>
+      <div class="dc-ref">Devore §8.2 – §8.4</div>
+    </a>
+
+    <a href="type_i_ii_explorer.html" class="demo-card c-err">
+      <div class="dc-icon">&#x2696;&#xFE0F;</div>
+      <span class="dc-tag tag-err">Error Analysis</span>
+      <h2>Type I &amp; II Errors — Power</h2>
+      <p>See &alpha;, &beta;, and power as areas under two overlapping distributions. Drag the effect size and n to explore the trade-off and the power curve.</p>
+      <div class="dc-ref">Devore §8.1 – §8.2</div>
+    </a>
+
+    <a href="ci_simulator.html" class="demo-card c-ci">
+      <div class="dc-icon">&#x1F3AF;</div>
+      <span class="dc-tag tag-ci">CI Simulation</span>
+      <h2>Confidence Interval Simulator</h2>
+      <p>Generate hundreds of intervals and watch the long-run coverage converge to the nominal confidence level. Green = hit, red = miss.</p>
+      <div class="dc-ref">Devore §7.2 – §7.3</div>
+    </a>
+
+    <a href="test_selector.html" class="demo-card c-sel">
+      <div class="dc-icon">&#x1F9ED;</div>
+      <span class="dc-tag tag-sel">Test Selection</span>
+      <h2>Which Test Should I Use?</h2>
+      <p>Step-by-step decision guide. Answer three questions about your data and get the correct test, formula, and conditions — with textbook references.</p>
+      <div class="dc-ref">Devore §8.2 – §8.4</div>
+    </a>
+
+  </div>
+
+</div>
+<footer>STAT 4340 &nbsp;·&nbsp; Spring 2026 &nbsp;·&nbsp; Dr. David Saah &nbsp;·&nbsp; Heroy 134 &nbsp;·&nbsp; SMU Department of Statistical Science</footer>
+</body>
+</html>
